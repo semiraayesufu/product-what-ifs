@@ -12,6 +12,8 @@
     --primary-hover:#1765cc;
     --primary-soft:#e8f0fe;
     --on-primary-soft:#1a73e8;
+    --success:#1e8e3e;
+    --success-soft:#e6f4ea;
     --surface:#ffffff;
     --surface-container:#f8f9fa;
     --surface-container-high:#ffffff;
@@ -24,6 +26,9 @@
     --warn-soft:#fef7e0;
     --error:#c5221f;
     --error-soft:#fce8e6;
+    --demo-bg:#fff8e1;
+    --demo-border:#e8d48a;
+    --demo-text:#7a5c00;
     --scrim:rgba(32,33,36,.55);
     --shadow-1:0 1px 2px rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
     --shadow-2:0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
@@ -35,23 +40,13 @@
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --primary:#8ab4f8;
-      --on-primary:#062e6f;
-      --primary-hover:#aecbfa;
-      --primary-soft:#28323f;
-      --on-primary-soft:#8ab4f8;
-      --surface:#202124;
-      --surface-container:#292a2d;
-      --surface-container-high:#2d2e30;
-      --border:#3c4043;
-      --border-strong:#5f6368;
-      --text:#e8eaed;
-      --text-secondary:#9aa0a6;
-      --text-tertiary:#80868b;
-      --warn:#fdd663;
-      --warn-soft:#3a341f;
-      --error:#f28b82;
-      --error-soft:#3a2725;
+      --primary:#8ab4f8; --on-primary:#062e6f; --primary-hover:#aecbfa; --primary-soft:#28323f; --on-primary-soft:#8ab4f8;
+      --success:#81c995; --success-soft:#1e2e21;
+      --surface:#202124; --surface-container:#292a2d; --surface-container-high:#2d2e30;
+      --border:#3c4043; --border-strong:#5f6368;
+      --text:#e8eaed; --text-secondary:#9aa0a6; --text-tertiary:#80868b;
+      --warn:#fdd663; --warn-soft:#3a341f; --error:#f28b82; --error-soft:#3a2725;
+      --demo-bg:#332b12; --demo-border:#5c4b19; --demo-text:#e8d48a;
       --scrim:rgba(0,0,0,.6);
       --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
       --shadow-2:0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
@@ -61,10 +56,12 @@
   }
   :root[data-theme="dark"]{
     --primary:#8ab4f8; --on-primary:#062e6f; --primary-hover:#aecbfa; --primary-soft:#28323f; --on-primary-soft:#8ab4f8;
+    --success:#81c995; --success-soft:#1e2e21;
     --surface:#202124; --surface-container:#292a2d; --surface-container-high:#2d2e30;
     --border:#3c4043; --border-strong:#5f6368;
     --text:#e8eaed; --text-secondary:#9aa0a6; --text-tertiary:#80868b;
     --warn:#fdd663; --warn-soft:#3a341f; --error:#f28b82; --error-soft:#3a2725;
+    --demo-bg:#332b12; --demo-border:#5c4b19; --demo-text:#e8d48a;
     --scrim:rgba(0,0,0,.6);
     --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
     --shadow-2:0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
@@ -90,6 +87,21 @@
   .filled{ font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 20; }
 
   .app{ display:flex; flex-direction:column; height:100vh; min-height:600px; }
+  .app-shell{ display:flex; flex-direction:column; height:100vh; min-height:600px; }
+
+  /* ===== Prototype control strip (not part of the Docs chrome) ===== */
+  .proto-bar{
+    flex-shrink:0; display:flex; align-items:center; gap:10px; padding:8px 16px;
+    background:var(--demo-bg); border-bottom:1px dashed var(--demo-border); font-size:12.5px; color:var(--demo-text);
+  }
+  .proto-chip{ background:var(--demo-text); color:var(--demo-bg); font-weight:700; letter-spacing:.06em; font-size:10px; padding:4px 9px; border-radius:999px; text-transform:uppercase; flex-shrink:0; }
+  .proto-bar label{ font-weight:600; flex-shrink:0; }
+  .proto-bar select{ border:1px solid var(--demo-border); background:var(--surface); color:var(--text); border-radius:var(--radius-xs); padding:5px 26px 5px 10px; cursor:pointer; flex-shrink:0;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'><path d='M7 10l5 5 5-5z' fill='%235f6368'/></svg>");
+    background-repeat:no-repeat; background-position:right 4px center;
+  }
+  .proto-hint{ color:var(--demo-text); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   /* ===== Icon button ===== */
   .icon-btn{
@@ -117,6 +129,8 @@
   .btn-tonal:hover:not(:disabled){ background:color-mix(in srgb, var(--primary-soft) 85%, var(--primary) 15%); }
   .btn-outlined{ background:transparent; color:var(--text); border-color:var(--border-strong); padding:0 23px; }
   .btn-outlined:hover:not(:disabled){ background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .btn-outlined-primary{ background:transparent; color:var(--primary); border-color:var(--border-strong); padding:0 20px; }
+  .btn-outlined-primary:hover:not(:disabled){ background:color-mix(in srgb, var(--primary) 8%, transparent); }
   .btn-text{ background:none; color:var(--primary); padding:0 12px; height:36px; }
   .btn-text:hover:not(:disabled){ background:color-mix(in srgb, var(--primary) 8%, transparent); }
 
@@ -216,8 +230,6 @@
   .popover-item .material-symbols-outlined{ font-size:19px; color:var(--text-secondary); }
   .popover-item.danger .material-symbols-outlined{ color:var(--error); }
   .popover-item .chev{ margin-left:auto; color:var(--text-tertiary); font-size:18px; }
-  .popover-item:disabled{ opacity:.4; cursor:not-allowed; }
-  .popover-item:disabled:hover{ background:none; }
   .popover-divider{ height:1px; background:var(--border); margin:6px 4px; }
   .emoji-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; padding:2px; }
   .emoji-btn{ font-size:19px; line-height:1; padding:8px 0; border-radius:6px; background:none; border:none; cursor:pointer; }
@@ -227,8 +239,9 @@
   .canvas{ flex:1 1 auto; overflow-y:auto; padding:40px 24px 100px; display:flex; justify-content:center; min-width:0; }
   .page-scale{ transform-origin:top center; }
   .page{ width:680px; max-width:100%; background:var(--surface); box-shadow:var(--paper-shadow); border-radius:2px; padding:56px 64px; font-family:var(--font-doc); color:var(--text); line-height:1.65; }
+  .page-top-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
   .page h2{ font-size:23px; margin:0 0 4px; font-weight:700; }
-  .page .doc-kicker{ font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-secondary); font-family:var(--font-ui); margin-bottom:6px; font-weight:600; }
+  .page .doc-kicker{ font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-secondary); font-family:var(--font-ui); font-weight:600; }
   .page p{ margin:0 0 14px; font-size:14.5px; max-width:65ch; }
   .page ul{ margin:0 0 14px; padding-left:22px; }
   .page li{ margin-bottom:6px; font-size:14.5px; }
@@ -241,38 +254,68 @@
   table.budget th{ color:var(--text-secondary); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
   table.budget tr:last-child td{ font-weight:700; border-bottom:none; }
 
+  .role-pill{ font-family:var(--font-ui); font-size:11px; font-weight:700; padding:4px 11px; border-radius:999px; white-space:nowrap; flex-shrink:0; }
+  .role-pill.role-owner, .role-pill.role-editor{ background:var(--primary-soft); color:var(--on-primary-soft); }
+  .role-pill.role-commenter{ background:var(--warn-soft); color:var(--warn); }
+  .role-pill.role-viewer{ background:var(--surface-container); color:var(--text-secondary); border:1px solid var(--border); }
+  .role-pill.role-none{ background:var(--error-soft); color:var(--error); }
+
+  .doc-body[contenteditable="true"]{ border-radius:var(--radius-sm); outline:2px dashed transparent; transition:outline-color .15s ease; margin:0 -8px; padding:0 8px; }
+  .doc-body[contenteditable="true"]:hover{ outline-color:var(--border-strong); }
+  .doc-body[contenteditable="true"]:focus{ outline-color:var(--primary); outline-style:solid; }
+
+  .comments-section{ margin-top:28px; padding-top:20px; border-top:1px solid var(--border); font-family:var(--font-ui); }
+  .comments-head{ display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; }
+  .comment-row{ display:flex; gap:10px; margin-bottom:14px; }
+  .comment-body{ flex:1 1 auto; min-width:0; }
+  .comment-head{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
+  .comment-author{ font-size:13px; font-weight:600; }
+  .comment-time{ font-size:11.5px; color:var(--text-tertiary); }
+  .comment-text{ font-size:13.5px; line-height:1.5; }
+  .comment-empty{ font-size:12.5px; color:var(--text-tertiary); font-style:italic; margin:0 0 12px; }
+  .comment-add{ display:flex; gap:8px; margin-top:8px; }
+  .comment-add input{ flex:1 1 auto; min-width:0; border:1px solid var(--border); border-radius:var(--radius-full); padding:9px 16px; background:var(--surface); color:var(--text); font-size:13px; }
+  .comment-add input:focus{ border-color:var(--primary); }
+
   /* ===== Modal ===== */
   .overlay{ position:fixed; inset:0; background:var(--scrim); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
   .overlay.open{ display:flex; }
-  .modal{ background:var(--surface-container-high); border-radius:var(--radius-lg); box-shadow:var(--shadow-3); width:100%; max-width:480px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
-  .modal-head{ padding:24px 24px 8px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-  .modal-head h3{ margin:0; font-size:20px; font-weight:500; color:var(--text); }
-  .modal-head p{ margin:8px 0 0; font-size:13px; color:var(--text-secondary); line-height:1.5; max-width:38ch; }
-  .modal-close{ margin-top:-4px; }
+  .modal{ background:var(--surface-container-high); border-radius:var(--radius-lg); box-shadow:var(--shadow-3); width:100%; max-width:520px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-head{ padding:24px 24px 4px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .modal-head h3{ margin:0; font-size:22px; font-weight:400; color:var(--text); }
+  .modal-head-actions{ display:flex; gap:2px; margin-top:-6px; }
   .modal-body{ padding:16px 24px; overflow-y:auto; }
-  .field-row{ display:flex; gap:8px; margin-bottom:16px; }
+  .scope-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; font-size:13px; color:var(--text-secondary); }
+  .scope-row select{ font-size:13px; padding:7px 30px 7px 12px; max-width:280px; }
   .text-field{ position:relative; flex:1 1 auto; min-width:0; }
-  .text-field input{ width:100%; border:1px solid var(--border); border-radius:var(--radius-xs); padding:14px 14px 8px; background:transparent; color:var(--text); min-width:0; }
-  .text-field label{ position:absolute; left:11px; top:-8px; background:var(--surface-container-high); padding:0 5px; font-size:11px; color:var(--text-secondary); }
-  .text-field input:focus{ border:2px solid var(--primary); padding:13px 13px 7px; }
+  .text-field input{ width:100%; height:52px; border:1px solid var(--border); border-radius:var(--radius-xs); padding:0 14px; background:transparent; color:var(--text); min-width:0; }
+  .text-field label{ position:absolute; left:11px; top:-8px; background:var(--surface-container-high); padding:0 5px; font-size:11.5px; color:var(--text-secondary); }
+  .text-field input:focus{ border:2px solid var(--primary); }
   .text-field input:focus + label{ color:var(--primary); }
+  .field-row{ display:flex; gap:8px; margin-bottom:18px; }
+  .section-head{ font-size:15px; font-weight:500; margin:18px 0 8px; color:var(--text); }
+  .section-head:first-child{ margin-top:0; }
   .people-list{ display:flex; flex-direction:column; gap:2px; margin-bottom:6px; }
   .person-row{ display:flex; align-items:center; gap:10px; padding:7px 2px; }
   .person-info{ flex:1 1 auto; min-width:0; }
   .person-name{ font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .person-email{ font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .role-select{ font-size:12.5px; padding:6px 26px 6px 10px; }
+  .role-static{ font-size:12.5px; color:var(--text-secondary); padding:6px 8px; white-space:nowrap; }
   .person-remove{ color:var(--text-secondary); }
   .divider{ height:1px; background:var(--border); margin:16px 0; }
   .access-block{ display:flex; align-items:center; gap:14px; }
   .access-icon{ width:40px; height:40px; border-radius:50%; background:var(--surface-container); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-secondary); }
-  .access-icon.on{ background:var(--primary-soft); color:var(--primary); }
+  .access-icon.on{ background:var(--success-soft); color:var(--success); }
   .access-copy{ flex:1 1 auto; min-width:0; }
-  .access-title{ font-size:13.5px; font-weight:500; margin-bottom:2px; }
+  .access-title-select{ font-size:14px; font-weight:400; padding:4px 26px 4px 4px; border:none; background:transparent;
+    appearance:none; -webkit-appearance:none; cursor:pointer; color:var(--text); margin-left:-4px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'><path d='M7 10l5 5 5-5z' fill='%235f6368'/></svg>");
+    background-repeat:no-repeat; background-position:right 0 center;
+  }
   .access-sub{ font-size:12px; color:var(--text-secondary); line-height:1.4; }
   .access-select{ font-size:12.5px; padding:8px 30px 8px 12px; flex-shrink:0; }
   .scope-note{ display:flex; gap:10px; align-items:flex-start; background:var(--primary-soft); color:var(--on-primary-soft); border-radius:var(--radius-md); padding:12px 14px; font-size:12.5px; line-height:1.5; margin-bottom:18px; }
-  .scope-note.warn{ background:var(--warn-soft); color:var(--warn); }
   .scope-note .material-symbols-outlined{ font-size:19px; margin-top:1px; }
   .modal-foot{ padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
 
@@ -300,136 +343,146 @@
     .page{ padding:32px 24px; }
     .doc-title{ max-width:130px; }
     .upgrade-btn{ display:none; }
+    .proto-hint{ display:none; }
   }
 </style>
 
-<div class="app" id="app">
-  <header class="topbar">
-    <div class="tb-row1">
-      <button class="icon-btn menu-btn" id="railToggle" aria-label="Toggle tabs panel">
-        <span class="material-symbols-outlined">menu</span>
-      </button>
-      <div class="doc-icon"><span class="material-symbols-outlined">description</span></div>
-      <div class="doc-meta">
-        <input class="doc-title" id="docTitle" value="Q3 Product Launch Plan" disabled />
-      </div>
-      <button class="icon-btn sm" id="starBtn" aria-label="Star this document">
-        <span class="material-symbols-outlined" id="starIcon">star</span>
-      </button>
-      <button class="icon-btn sm" aria-label="Move to folder"><span class="material-symbols-outlined">folder_open</span></button>
-      <button class="icon-btn sm" aria-label="Saved to Drive"><span class="material-symbols-outlined">cloud_done</span></button>
+<div class="app-shell">
+  <div class="proto-bar">
+    <span class="proto-chip">Prototype</span>
+    <label for="previewSelect">Viewing as</label>
+    <select id="previewSelect"></select>
+    <span class="proto-hint">Simulates what each person sees, based on the sharing grants below — not part of the real Docs UI.</span>
+  </div>
 
-      <div class="tb1-spacer"></div>
-
-      <div class="tb1-actions">
-        <button class="icon-btn" aria-label="Version history"><span class="material-symbols-outlined">history</span></button>
-        <button class="icon-btn" aria-label="Comment history"><span class="material-symbols-outlined">chat_bubble</span></button>
-        <button class="icon-btn" aria-label="Start video call"><span class="material-symbols-outlined">videocam</span></button>
-      </div>
-
-      <div class="split-btn" style="margin-left:10px;">
-        <button class="btn btn-filled" id="shareDocBtn">
-          <span class="material-symbols-outlined">group_add</span> Share
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="tb-row1">
+        <button class="icon-btn menu-btn" id="railToggle" aria-label="Toggle tabs panel">
+          <span class="material-symbols-outlined">menu</span>
         </button>
-        <button class="split-chev" aria-label="Share options"><span class="material-symbols-outlined">arrow_drop_down</span></button>
+        <div class="doc-icon"><span class="material-symbols-outlined">description</span></div>
+        <div class="doc-meta">
+          <input class="doc-title" id="docTitle" value="Healthcare AI Market Entry Strategy" disabled />
+        </div>
+        <button class="icon-btn sm" id="starBtn" aria-label="Star this document">
+          <span class="material-symbols-outlined" id="starIcon">star</span>
+        </button>
+        <button class="icon-btn sm" aria-label="Move to folder"><span class="material-symbols-outlined">folder_open</span></button>
+        <button class="icon-btn sm" aria-label="Saved to Drive"><span class="material-symbols-outlined">cloud_done</span></button>
+
+        <div class="tb1-spacer"></div>
+
+        <div class="tb1-actions">
+          <button class="icon-btn" aria-label="Version history"><span class="material-symbols-outlined">history</span></button>
+          <button class="icon-btn" aria-label="Comment history"><span class="material-symbols-outlined">chat_bubble</span></button>
+          <button class="icon-btn" aria-label="Start video call"><span class="material-symbols-outlined">videocam</span></button>
+        </div>
+
+        <div class="split-btn" style="margin-left:10px;">
+          <button class="btn btn-filled" id="shareDocBtn">
+            <span class="material-symbols-outlined">group_add</span> Share
+          </button>
+          <button class="split-chev" aria-label="Share options"><span class="material-symbols-outlined">arrow_drop_down</span></button>
+        </div>
+
+        <button class="btn btn-outlined upgrade-btn">Upgrade</button>
+        <button class="icon-btn" aria-label="AI assistant"><span class="material-symbols-outlined">auto_awesome</span></button>
+        <div class="avatar account-avatar">JR</div>
       </div>
 
-      <button class="btn btn-outlined upgrade-btn">Upgrade</button>
-      <button class="icon-btn" aria-label="AI assistant"><span class="material-symbols-outlined">auto_awesome</span></button>
-      <div class="avatar account-avatar">JR</div>
-    </div>
+      <nav class="menu-row" aria-label="Menu bar">
+        <button class="menu-btn2">File</button>
+        <button class="menu-btn2">Edit</button>
+        <button class="menu-btn2">View</button>
+        <button class="menu-btn2">Insert</button>
+        <button class="menu-btn2">Format</button>
+        <button class="menu-btn2">Tools</button>
+        <button class="menu-btn2">Extensions</button>
+        <button class="menu-btn2">Help</button>
+      </nav>
 
-    <nav class="menu-row" aria-label="Menu bar">
-      <button class="menu-btn2">File</button>
-      <button class="menu-btn2">Edit</button>
-      <button class="menu-btn2">View</button>
-      <button class="menu-btn2">Insert</button>
-      <button class="menu-btn2">Format</button>
-      <button class="menu-btn2">Tools</button>
-      <button class="menu-btn2">Extensions</button>
-      <button class="menu-btn2">Help</button>
-    </nav>
-
-    <div class="toolbar-wrap">
-      <div class="toolbar" id="toolbar">
-        <button class="tb-search"><span class="material-symbols-outlined">search</span>Menus</button>
-        <div class="tb-div"></div>
-        <button class="icon-btn sm" aria-label="Undo"><span class="material-symbols-outlined">undo</span></button>
-        <button class="icon-btn sm" aria-label="Redo"><span class="material-symbols-outlined">redo</span></button>
-        <button class="icon-btn sm" aria-label="Print"><span class="material-symbols-outlined">print</span></button>
-        <button class="icon-btn sm" aria-label="Spelling and grammar check"><span class="material-symbols-outlined">spellcheck</span></button>
-        <button class="icon-btn sm" aria-label="Paint format"><span class="material-symbols-outlined">format_paint</span></button>
-        <div class="tb-div"></div>
-        <select class="md-select zoom-select" id="zoomSelect" aria-label="Zoom">
-          <option value="0.75">75%</option>
-          <option value="0.9">90%</option>
-          <option value="1" selected>100%</option>
-          <option value="1.25">125%</option>
-          <option value="1.5">150%</option>
-        </select>
-        <div class="tb-div"></div>
-        <select class="md-select style-select" aria-label="Paragraph style">
-          <option>Heading 2</option>
-          <option>Title</option>
-          <option>Subtitle</option>
-          <option>Normal text</option>
-        </select>
-        <select class="md-select font-select" aria-label="Font">
-          <option>Roboto</option>
-          <option>Arial</option>
-          <option>Georgia</option>
-        </select>
-        <div class="size-stepper">
-          <button class="icon-btn sm" aria-label="Decrease font size"><span class="material-symbols-outlined">remove</span></button>
-          <input class="size-field" value="13" aria-label="Font size" />
-          <button class="icon-btn sm" aria-label="Increase font size"><span class="material-symbols-outlined">add</span></button>
-        </div>
-        <div class="tb-div"></div>
-        <button class="icon-btn sm" aria-label="Bold"><span class="material-symbols-outlined">format_bold</span></button>
-        <button class="icon-btn sm" aria-label="Italic"><span class="material-symbols-outlined">format_italic</span></button>
-        <button class="icon-btn sm" aria-label="Underline"><span class="material-symbols-outlined">format_underlined</span></button>
-        <button class="icon-btn sm" aria-label="Text color"><span class="material-symbols-outlined">format_color_text</span></button>
-        <button class="icon-btn sm" aria-label="Highlight color"><span class="material-symbols-outlined">ink_highlighter</span></button>
-        <div class="tb-div"></div>
-        <button class="icon-btn sm" aria-label="Insert link"><span class="material-symbols-outlined">link</span></button>
-        <button class="icon-btn sm" aria-label="Add comment"><span class="material-symbols-outlined">add_comment</span></button>
-        <button class="icon-btn sm" aria-label="Insert image"><span class="material-symbols-outlined">image</span></button>
-        <div class="tb-div"></div>
-        <button class="icon-btn sm" aria-label="Align"><span class="material-symbols-outlined">format_align_left</span></button>
-        <button class="icon-btn sm" aria-label="Line spacing"><span class="material-symbols-outlined">format_line_spacing</span></button>
-        <button class="icon-btn sm" aria-label="Checklist"><span class="material-symbols-outlined">checklist</span></button>
-        <button class="icon-btn sm" aria-label="Bulleted list"><span class="material-symbols-outlined">format_list_bulleted</span></button>
-        <button class="icon-btn sm" aria-label="Numbered list"><span class="material-symbols-outlined">format_list_numbered</span></button>
-        <button class="icon-btn sm" aria-label="Decrease indent"><span class="material-symbols-outlined">format_indent_decrease</span></button>
-        <button class="icon-btn sm" aria-label="Increase indent"><span class="material-symbols-outlined">format_indent_increase</span></button>
-        <button class="icon-btn sm" aria-label="Clear formatting"><span class="material-symbols-outlined">format_clear</span></button>
-        <div class="tb-right">
-          <select class="md-select editing-select" aria-label="Mode">
-            <option>Editing</option>
-            <option>Suggesting</option>
-            <option>Viewing</option>
+      <div class="toolbar-wrap">
+        <div class="toolbar" id="toolbar">
+          <button class="tb-search"><span class="material-symbols-outlined">search</span>Menus</button>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Undo"><span class="material-symbols-outlined">undo</span></button>
+          <button class="icon-btn sm" aria-label="Redo"><span class="material-symbols-outlined">redo</span></button>
+          <button class="icon-btn sm" aria-label="Print"><span class="material-symbols-outlined">print</span></button>
+          <button class="icon-btn sm" aria-label="Spelling and grammar check"><span class="material-symbols-outlined">spellcheck</span></button>
+          <button class="icon-btn sm" aria-label="Paint format"><span class="material-symbols-outlined">format_paint</span></button>
+          <div class="tb-div"></div>
+          <select class="md-select zoom-select" id="zoomSelect" aria-label="Zoom">
+            <option value="0.75">75%</option>
+            <option value="0.9">90%</option>
+            <option value="1" selected>100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.5">150%</option>
           </select>
+          <div class="tb-div"></div>
+          <select class="md-select style-select" aria-label="Paragraph style">
+            <option>Heading 2</option>
+            <option>Title</option>
+            <option>Subtitle</option>
+            <option>Normal text</option>
+          </select>
+          <select class="md-select font-select" aria-label="Font">
+            <option>Roboto</option>
+            <option>Arial</option>
+            <option>Georgia</option>
+          </select>
+          <div class="size-stepper">
+            <button class="icon-btn sm" aria-label="Decrease font size"><span class="material-symbols-outlined">remove</span></button>
+            <input class="size-field" value="13" aria-label="Font size" />
+            <button class="icon-btn sm" aria-label="Increase font size"><span class="material-symbols-outlined">add</span></button>
+          </div>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Bold"><span class="material-symbols-outlined">format_bold</span></button>
+          <button class="icon-btn sm" aria-label="Italic"><span class="material-symbols-outlined">format_italic</span></button>
+          <button class="icon-btn sm" aria-label="Underline"><span class="material-symbols-outlined">format_underlined</span></button>
+          <button class="icon-btn sm" aria-label="Text color"><span class="material-symbols-outlined">format_color_text</span></button>
+          <button class="icon-btn sm" aria-label="Highlight color"><span class="material-symbols-outlined">ink_highlighter</span></button>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Insert link"><span class="material-symbols-outlined">link</span></button>
+          <button class="icon-btn sm" aria-label="Add comment"><span class="material-symbols-outlined">add_comment</span></button>
+          <button class="icon-btn sm" aria-label="Insert image"><span class="material-symbols-outlined">image</span></button>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Align"><span class="material-symbols-outlined">format_align_left</span></button>
+          <button class="icon-btn sm" aria-label="Line spacing"><span class="material-symbols-outlined">format_line_spacing</span></button>
+          <button class="icon-btn sm" aria-label="Checklist"><span class="material-symbols-outlined">checklist</span></button>
+          <button class="icon-btn sm" aria-label="Bulleted list"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+          <button class="icon-btn sm" aria-label="Numbered list"><span class="material-symbols-outlined">format_list_numbered</span></button>
+          <button class="icon-btn sm" aria-label="Decrease indent"><span class="material-symbols-outlined">format_indent_decrease</span></button>
+          <button class="icon-btn sm" aria-label="Increase indent"><span class="material-symbols-outlined">format_indent_increase</span></button>
+          <button class="icon-btn sm" aria-label="Clear formatting"><span class="material-symbols-outlined">format_clear</span></button>
+          <div class="tb-right">
+            <select class="md-select editing-select" aria-label="Mode">
+              <option>Editing</option>
+              <option>Suggesting</option>
+              <option>Viewing</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:center; padding:1px 0 3px;">
+          <button class="icon-btn sm" id="toolbarCollapseBtn" aria-label="Collapse toolbar" style="width:56px; height:14px; border-radius:0 0 10px 10px;">
+            <span class="material-symbols-outlined" id="collapseIcon" style="font-size:16px;">keyboard_arrow_up</span>
+          </button>
         </div>
       </div>
-      <div style="display:flex; justify-content:center; padding:1px 0 3px;">
-        <button class="icon-btn sm" id="toolbarCollapseBtn" aria-label="Collapse toolbar" style="width:56px; height:14px; border-radius:0 0 10px 10px;">
-          <span class="material-symbols-outlined" id="collapseIcon" style="font-size:16px;">keyboard_arrow_up</span>
-        </button>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <div class="body">
-    <nav class="rail" id="rail">
-      <div class="rail-header"><span>Tabs</span></div>
-      <ul class="tab-list" id="tabList"></ul>
-      <button class="add-tab-btn" id="addTabBtn">
-        <span class="material-symbols-outlined" style="font-size:18px;">add</span> Add tab
-      </button>
-    </nav>
-    <main class="canvas" id="canvas">
-      <div class="page-scale" id="pageScale"><article class="page" id="page"></article></div>
-    </main>
+    <div class="body">
+      <nav class="rail" id="rail">
+        <div class="rail-header"><span>Tabs</span></div>
+        <ul class="tab-list" id="tabList"></ul>
+        <button class="add-tab-btn" id="addTabBtn">
+          <span class="material-symbols-outlined" style="font-size:18px;">add</span> Add tab
+        </button>
+      </nav>
+      <main class="canvas" id="canvas">
+        <div class="page-scale" id="pageScale"><article class="page" id="page"></article></div>
+      </main>
+    </div>
   </div>
 </div>
 
@@ -450,89 +503,96 @@
     let h=0; for(const c of seed) h = (h*31 + c.charCodeAt(0)) % 997;
     return palette[h % palette.length];
   }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function escapeAttr(s){ return escapeHtml(s); }
+  function validEmail(s){ return /^\S+@\S+\.\S+$/.test(s); }
+  function deriveName(email){
+    const namePart = email.split('@')[0].replace(/[._]/g,' ');
+    return namePart.replace(/\b\w/g, c=>c.toUpperCase());
+  }
 
-  const DOC_TITLE = "Q3 Product Launch Plan";
+  const DOC_TITLE = "Healthcare AI Market Entry Strategy";
   const OWNER = { name:"Jordan Reyes", email:"jordan@brightpath.io" };
+  const EMOJIS = ['📄','📝','📊','💰','🎯','🚀','✅','📌','🔒','👥','📅','💡','⚙️','🎨','📈','❤️'];
 
   let state = {
-    activeTabId: "overview",
+    activeTabId: "executive-summary",
     openMenuTabId: null,
     starred: false,
+    previewAs: null,
     tabs: [
       {
-        id:"overview", name:"Overview", accent:"#1a73e8",
-        shared:false, sharedWith:[], linkAccess:"restricted",
+        id:"executive-summary", name:"Executive Summary", parentId:null, emoji:null, accent:"#1a73e8",
+        comments: [],
         content: {
-          kicker:"Section 1", title:"Overview",
+          kicker:"Section 1", title:"Executive Summary",
           body: [
-            {p:"Q3's launch centers on the Atlas workspace redesign shipping to all customers on September 30. This tab tracks goals, ownership, and the cross-team schedule everyone can see."},
-            {ul:["Primary goal: cut new-workspace setup time from 14 minutes to under 5.","Secondary goal: raise week-1 activation from 61% to 75%.","Sponsor: Dana Whitfield (VP Product). Launch lead: Jordan Reyes."]},
-            {p:"Every collaborator on this document can read this tab — it's the shared front door before people jump into the section that's actually theirs."}
+            {p:"This document lays out the case for entering the healthcare AI market by Q3 next year — where we'd compete, what it would cost, and the go/no-go recommendation for leadership."},
+            {ul:["Thesis: diagnostic-support AI for mid-size hospital networks is underserved by the current incumbents.","Target segment: 200–800 bed hospital networks in the US, starting with radiology.","Timeline: 6-month evaluation, decision gate at the end of Q1.","Ask: $2.1M in seed evaluation budget, pending the Financial Analysis tab."]},
+            {p:"Market Research, Financial Analysis, and the Final Recommendation each go deeper on one part of this case — and each can be shared on its own with exactly the people who need to review it."}
           ]
         }
       },
       {
-        id:"marketing", name:"Marketing Brief", accent:"#8430ce",
-        shared:true,
-        sharedWith:[{name:"Priya Chandra", email:"priya@northwind-agency.com", role:"Commenter"}],
-        linkAccess:"restricted",
+        id:"market-research", name:"Market Research", parentId:null, emoji:null, accent:"#8430ce",
+        comments: [
+          {author:"Maya Singh", text:"Can we double-check the TAM figure against the latest Frost & Sullivan report? The $4.8B number looks dated.", time:"2h ago"}
+        ],
         content:{
-          kicker:"Section 2", title:"Marketing Brief",
+          kicker:"Section 2", title:"Market Research",
           body:[
-            {p:"Positioning, launch-week creative, and the press embargo date for Northwind, our external agency partner. Northwind only needs this tab — not the roadmap, the budget, or engineering's internal notes."},
-            {ul:["Embargo lifts September 30, 6:00am PT.","Hero message: “Set up a workspace in under five minutes.”","Deliverables due from Northwind: hero video (Sept 20), landing page copy (Sept 12), three social cutdowns (Sept 24)."]},
-            {p:"Comments from Northwind should land directly on this tab. Keep budget figures and internal timeline risk out of anything shared externally."}
+            {p:"Sizing, competitive landscape, and customer segments for diagnostic-support AI in mid-size hospital networks."},
+            {ul:["TAM: ~$4.8B across US hospital networks; SAM (200–800 beds, radiology-first): ~$960M.","Three incumbents hold 70% share; none focus specifically on the mid-size segment.","Buyer profile: VP of Radiology or CMIO, 4–6 month sales cycle, procurement-led.","Primary objection in early interviews: integration effort with existing PACS systems."]},
+            {p:"Full interview notes and the competitor teardown live in the shared drive — this tab is the summary version for review."}
           ]
         }
       },
       {
-        id:"engineering", name:"Engineering Specs", accent:"#12805c",
-        shared:false, sharedWith:[], linkAccess:"restricted",
+        id:"financial-analysis", name:"Financial Analysis", parentId:null, emoji:null, accent:"#d93025",
+        comments: [],
         content:{
-          kicker:"Section 3", title:"Engineering Specs",
+          kicker:"Section 3 · Restricted", title:"Financial Analysis",
           body:[
-            {p:"Migration plan for existing workspaces, feature-flag rollout order, and the rollback plan if activation drops after ship."},
-            {ul:["Flag: workspace-onboarding-v2, ramping 10% → 50% → 100% over 5 days.","Rollback trigger: activation drop >8% vs. control for 2 consecutive days.","Owner: Priyanka Rao (Eng). Backup: Tomas Vidal."]}
-          ]
-        }
-      },
-      {
-        id:"budget", name:"Budget (Confidential)", accent:"#d93025",
-        shared:false, sharedWith:[], linkAccess:"restricted",
-        content:{
-          kicker:"Section 4 · Restricted", title:"Budget (Confidential)",
-          body:[
-            {p:"Full launch spend, including the agency contract value — not for external sharing. This is exactly what tab-level sharing needs to protect if this document ever goes outside the company."},
+            {p:"Revenue projections, cost structure, and the funding ask for a 6-month market evaluation. Keep this out of anything shared externally."},
             {table:{
-              headers:["Line item","Owner","Amount"],
+              headers:["Line item","Year 1","Year 3"],
               rows:[
-                ["Northwind agency contract","Marketing","$48,000"],
-                ["Paid social & search","Marketing","$22,500"],
-                ["Launch event (SF)","Events","$16,800"],
-                ["Contractor eng support","Engineering","$9,200"],
-                ["Total","","$96,500"]
+                ["Revenue (10 pilot accounts)","$0","$6.2M"],
+                ["Engineering & clinical validation","$1.4M","$2.1M"],
+                ["Sales & regulatory","$0.5M","$1.8M"],
+                ["Net (evaluation phase)","-$1.9M","$2.3M"]
               ]
-            }}
+            }},
+            {p:"Break-even modeled at month 22 assuming a 35% pilot-to-contract conversion rate."}
           ]
         }
       },
       {
-        id:"notes", name:"Meeting Notes", accent:"#e37400",
-        shared:false, sharedWith:[], linkAccess:"restricted",
+        id:"final-recommendation", name:"Final Recommendation", parentId:null, emoji:null, accent:"#12805c",
+        comments: [],
         content:{
-          kicker:"Section 5", title:"Meeting Notes — Sept 2",
+          kicker:"Section 4", title:"Final Recommendation",
           body:[
-            {p:"Weekly launch sync. Attendees: Jordan, Dana, Priyanka, Sam."},
-            {ul:["Landing page copy locked pending legal review — due Sept 5.","Northwind asked for one more round on the hero video; new due date Sept 20.","Budget variance from contractor eng support flagged — revisit next sync."]}
+            {p:"Recommendation: proceed to a funded 6-month evaluation phase, gated on signing at least 3 pilot hospital networks by month 4."},
+            {ul:["Go/no-go owner: Jordan Reyes (this document's owner).","Next step: finalize the pilot agreement template with Legal by end of month.","Risk to watch: PACS integration effort could extend the sales cycle beyond the modeled 4–6 months."]}
           ]
         }
       }
-    ]
+    ],
+    grants: [
+      {id:'g1', email:'jeff@example.com', name:'Jeff Okafor', scope:'market-research', role:'Editor'},
+      {id:'g2', email:'maya@example.com', name:'Maya Singh', scope:'market-research', role:'Commenter'},
+      {id:'g3', email:'maya@example.com', name:'Maya Singh', scope:'financial-analysis', role:'Viewer'},
+      {id:'g4', email:'alex@example.com', name:'Alex Rivera', scope:'document', role:'Editor'}
+    ],
+    generalAccess: {
+      'document': {mode:'restricted', role:'Viewer'},
+      'executive-summary': {mode:'restricted', role:'Viewer'},
+      'market-research': {mode:'restricted', role:'Viewer'},
+      'financial-analysis': {mode:'restricted', role:'Viewer'},
+      'final-recommendation': {mode:'restricted', role:'Viewer'}
+    }
   };
-
-  state.tabs.forEach(t=>{ if(t.parentId===undefined) t.parentId=null; if(t.emoji===undefined) t.emoji=null; });
-
-  const EMOJIS = ['📄','📝','📊','💰','🎯','🚀','✅','📌','🔒','👥','📅','💡','⚙️','🎨','📈','❤️'];
 
   let deletedStash = null;
   let deletedTimer = null;
@@ -556,15 +616,13 @@
     zoomSelect: document.getElementById('zoomSelect'),
     toolbar: document.getElementById('toolbar'),
     toolbarCollapseBtn: document.getElementById('toolbarCollapseBtn'),
-    collapseIcon: document.getElementById('collapseIcon')
+    collapseIcon: document.getElementById('collapseIcon'),
+    previewSelect: document.getElementById('previewSelect')
   };
 
+  /* ---------- Tab hierarchy helpers ---------- */
   function getTab(id){ return state.tabs.find(t=>t.id===id); }
   function childrenOf(id){ return state.tabs.filter(t=>t.parentId===id); }
-
-  /* Tabs are kept in a flat array, but a parent's children always sit
-     immediately after it — "blocks" below is that grouping made explicit,
-     so reordering a parent carries its children along with it. */
   function getBlocks(){
     const blocks = [];
     state.tabs.forEach(t=>{
@@ -574,7 +632,6 @@
     return blocks;
   }
   function setFromBlocks(blocks){ state.tabs = blocks.flat(); }
-
   function lastDescendantIndex(id){
     const idx = state.tabs.findIndex(t=>t.id===id);
     let i = idx+1;
@@ -582,44 +639,82 @@
     return i-1;
   }
 
-  function moveTab(id, dir){
-    const tab = getTab(id);
-    if(!tab) return;
-    const blocks = getBlocks();
-    if(tab.parentId){
-      const block = blocks.find(b=>b[0].id===tab.parentId);
-      if(!block) return;
-      const i = block.findIndex(t=>t.id===id);
-      const j = i+dir;
-      if(j<1 || j>=block.length) return;
-      [block[i], block[j]] = [block[j], block[i]];
-    } else {
-      const bi = blocks.findIndex(b=>b[0].id===id);
-      const bj = bi+dir;
-      if(bj<0 || bj>=blocks.length) return;
-      [blocks[bi], blocks[bj]] = [blocks[bj], blocks[bi]];
+  /* ---------- Permission model: WHO + SCOPE + ROLE ---------- */
+  function grantsForScope(scope){ return state.grants.filter(g=>g.scope===scope); }
+  function hasTabGrantsOrLink(tabId){
+    return grantsForScope(tabId).length>0 || state.generalAccess[tabId].mode === 'anyone';
+  }
+  function personsList(){
+    const map = new Map();
+    state.grants.forEach(g=>{ if(!map.has(g.email)) map.set(g.email, {email:g.email, name:g.name}); });
+    const list = [...map.values()];
+    const anyPublic = Object.values(state.generalAccess).some(a=>a.mode==='anyone');
+    if(anyPublic) list.push({email:'__public__', name:'Public link visitor'});
+    return list;
+  }
+  function visibleTabsFor(email){
+    if(email==='__public__'){
+      if(state.generalAccess.document.mode==='anyone') return state.tabs.map(t=>t.id);
+      return state.tabs.filter(t=>state.generalAccess[t.id] && state.generalAccess[t.id].mode==='anyone').map(t=>t.id);
     }
-    setFromBlocks(blocks);
-    renderTabs();
+    if(state.grants.some(g=>g.email===email && g.scope==='document')) return state.tabs.map(t=>t.id);
+    return state.grants.filter(g=>g.email===email && g.scope!=='document').map(g=>g.scope);
+  }
+  function accessFor(email, tabId){
+    if(email==='__public__'){
+      if(state.generalAccess.document.mode==='anyone') return {role: state.generalAccess.document.role, via:'document link'};
+      if(state.generalAccess[tabId] && state.generalAccess[tabId].mode==='anyone') return {role: state.generalAccess[tabId].role, via:'tab link'};
+      return null;
+    }
+    const docGrant = state.grants.find(g=>g.email===email && g.scope==='document');
+    if(docGrant) return {role:docGrant.role, via:'document'};
+    const tabGrant = state.grants.find(g=>g.email===email && g.scope===tabId);
+    if(tabGrant) return {role:tabGrant.role, via:'tab'};
+    return null;
+  }
+  function effectiveAccess(tabId){
+    if(!state.previewAs) return {role:'Owner', via:null};
+    return accessFor(state.previewAs, tabId) || {role:null, via:null};
+  }
+  function isGuestView(){ return !!state.previewAs; }
+
+  function renderPreviewSelect(){
+    const people = personsList();
+    el.previewSelect.innerHTML = [
+      `<option value="">${escapeHtml(OWNER.name)} (Owner)</option>`,
+      ...people.map(p=>`<option value="${escapeAttr(p.email)}">${escapeHtml(p.name)}${p.email==='__public__' ? '' : ' — '+escapeHtml(p.email)}</option>`)
+    ].join('');
+    el.previewSelect.value = state.previewAs || '';
   }
 
-  function moveTabInto(id, targetId){
-    const tab = getTab(id);
-    if(!tab || tab.id === targetId) return;
-    const idx = state.tabs.indexOf(tab);
-    state.tabs.splice(idx, 1);
-    tab.parentId = targetId;
-    const insertAt = lastDescendantIndex(targetId) + 1;
-    state.tabs.splice(insertAt, 0, tab);
+  function applyPreview(email){
+    state.previewAs = email || null;
+    if(state.previewAs){
+      const vis = visibleTabsFor(state.previewAs);
+      if(!vis.includes(state.activeTabId)) state.activeTabId = vis[0] || state.tabs[0].id;
+    }
+    el.shareDocBtn.disabled = isGuestView();
+    const split = el.shareDocBtn.closest('.split-btn');
+    split.style.opacity = isGuestView() ? .5 : 1;
+    split.style.pointerEvents = isGuestView() ? 'none' : 'auto';
     closeTabMenu();
     renderTabs();
-    showToast(`Moved "${tab.name}" into "${getTab(targetId).name}".`);
+    renderPage();
   }
 
+  /* ---------- Rail ---------- */
   function renderTabs(){
-    el.tabList.innerHTML = state.tabs.map(tab=>{
+    const guest = isGuestView();
+    const visibleIds = guest ? new Set(visibleTabsFor(state.previewAs)) : null;
+    const tabsToRender = guest ? state.tabs.filter(t=>visibleIds.has(t.id)) : state.tabs;
+
+    el.addTabBtn.style.display = guest ? 'none' : 'flex';
+
+    el.tabList.innerHTML = tabsToRender.map(tab=>{
       const active = tab.id === state.activeTabId;
-      const showShareBadge = tab.shared;
+      const showShareBadge = !guest && hasTabGrantsOrLink(tab.id);
+      const showKebab = !guest;
+      const showAsSubtab = tab.parentId && (!guest || visibleIds.has(tab.parentId));
       let nameHtml;
       if(tab.renaming){
         nameHtml = `<input class="tab-name-input" data-rename="${tab.id}" value="${escapeAttr(tab.name)}" />`;
@@ -628,11 +723,11 @@
       }
       const leading = tab.emoji ? `<span class="tab-emoji">${tab.emoji}</span>` : `<span class="tab-dot" style="background:${tab.accent}"></span>`;
       return `
-      <li class="tab-row ${active?'active':''} ${tab.parentId?'is-subtab':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
+      <li class="tab-row ${active?'active':''} ${showAsSubtab?'is-subtab':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
         ${leading}
         ${nameHtml}
         ${showShareBadge ? `<span class="tab-badge" title="Shared with people outside the document">${icon('link',17)}</span>` : ''}
-        <button class="icon-btn sm tab-kebab" data-kebab="${tab.id}" aria-label="Tab options">${icon('more_vert',18)}</button>
+        ${showKebab ? `<button class="icon-btn sm tab-kebab" data-kebab="${tab.id}" aria-label="Tab options">${icon('more_vert',18)}</button>` : ''}
       </li>`;
     }).join('');
 
@@ -642,8 +737,7 @@
   function renderTabMenu(tabId){
     const row = el.tabList.querySelector(`.tab-row[data-tab="${tabId}"]`);
     if(!row) return;
-    const existing = document.getElementById('tabPopover');
-    if(existing) existing.remove();
+    document.getElementById('tabPopover')?.remove();
     document.getElementById('emojiPopover')?.remove();
     document.getElementById('moveIntoPopover')?.remove();
 
@@ -696,9 +790,7 @@
     pop.id = 'emojiPopover';
     pop.style.minWidth = '150px';
     pop.innerHTML = `
-      <div class="emoji-grid">
-        ${EMOJIS.map(e=>`<button class="emoji-btn" data-emoji="${e}" data-id="${tabId}">${e}</button>`).join('')}
-      </div>
+      <div class="emoji-grid">${EMOJIS.map(e=>`<button class="emoji-btn" data-emoji="${e}" data-id="${tabId}">${e}</button>`).join('')}</div>
       <div class="popover-divider"></div>
       <button class="popover-item" data-action="emoji-clear" data-id="${tabId}">${icon('close',19)} Remove emoji</button>
     `;
@@ -731,17 +823,55 @@
     document.getElementById('moveIntoPopover')?.remove();
   }
 
+  /* ---------- Page (content, access note, comments) ---------- */
+  function roleBadge(role){
+    const labels = {Owner:'Owner', Editor:'Can edit', Commenter:'Can comment', Viewer:'Can view'};
+    const cls = role ? role.toLowerCase() : 'none';
+    return `<span class="role-pill role-${cls}">${labels[role] || 'No access'}</span>`;
+  }
+
+  function renderComments(tab, canComment){
+    const list = (tab.comments||[]).map(c=>`
+      <div class="comment-row">
+        <div class="avatar" style="background:${colorFor(c.author)}">${initials(c.author)}</div>
+        <div class="comment-body">
+          <div class="comment-head"><span class="comment-author">${escapeHtml(c.author)}</span><span class="comment-time">${escapeHtml(c.time)}</span></div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+        </div>
+      </div>`).join('') || `<p class="comment-empty">No comments yet on this tab.</p>`;
+    const addBox = canComment
+      ? `<div class="comment-add"><input type="text" id="commentInput" placeholder="Comment on this tab…" /><button class="btn btn-tonal" id="commentSendBtn">Comment</button></div>`
+      : `<p class="comment-empty">${state.previewAs ? "Viewers can't comment on this tab." : ''}</p>`;
+    return `<div class="comments-section"><div class="comments-head">${icon('chat_bubble',16)} Comments</div>${list}${addBox}</div>`;
+  }
+
   function renderPage(){
     const tab = getTab(state.activeTabId);
     if(!tab){ el.page.innerHTML=''; return; }
     const c = tab.content;
+    const access = effectiveAccess(tab.id);
+    const canEdit = access.role === 'Owner' || access.role === 'Editor';
+    const canComment = access.role === 'Owner' || access.role === 'Editor' || access.role === 'Commenter';
+
     let noteHtml = '';
-    if(tab.shared){
-      const names = tab.sharedWith.map(p=>p.name).join(', ');
-      const who = names ? `with <strong>${escapeHtml(names)}</strong>` : `via a public link`;
-      noteHtml = `<div class="access-note">${icon('link',19)}<span>This tab is shared separately from the document ${who}. They can't see the other tabs.</span></div>`;
+    if(state.previewAs){
+      const viaText = access.via==='document' ? 'the entire document'
+        : access.via==='document link' ? 'a public link to the entire document'
+        : access.via==='tab link' ? 'a public link to this tab'
+        : 'this tab only';
+      const sharedBit = (access.via==='document' || access.via==='tab') ? `, shared by ${escapeHtml(OWNER.name)}` : '';
+      noteHtml = `<div class="access-note tight">${icon('group',19)}<span>You have <strong>${access.role}</strong> access to ${viaText}${sharedBit}. ${access.via==='tab' ? `The rest of "${escapeHtml(DOC_TITLE)}" isn't visible to you.` : ''}</span></div>`;
+    } else {
+      const tabGrants = grantsForScope(tab.id);
+      const ga = state.generalAccess[tab.id];
+      if(tabGrants.length || ga.mode==='anyone'){
+        const names = tabGrants.map(g=>`${g.name} (${g.role})`).join(', ');
+        const linkBit = ga.mode==='anyone' ? `Anyone with the tab link can ${ga.role.toLowerCase()}.` : '';
+        noteHtml = `<div class="access-note">${icon('link',19)}<span>This tab is individually shared${names?` with <strong>${escapeHtml(names)}</strong>`:''}. ${linkBit} They can't see the other tabs.</span></div>`;
+      }
     }
-    const bodyHtml = c.body.map(block=>{
+
+    const bodyHtml = tab.editedHtml != null ? tab.editedHtml : c.body.map(block=>{
       if(block.p) return `<p>${block.p}</p>`;
       if(block.ul) return `<ul>${block.ul.map(li=>`<li>${li}</li>`).join('')}</ul>`;
       if(block.table){
@@ -755,12 +885,33 @@
     }).join('');
 
     el.page.innerHTML = `
-      <div class="doc-kicker">${c.kicker}</div>
+      <div class="page-top-row">
+        <div class="doc-kicker">${c.kicker}</div>
+        ${roleBadge(access.role)}
+      </div>
       <h2>${escapeHtml(c.title)}</h2>
       <div style="height:14px"></div>
       ${noteHtml}
-      ${bodyHtml}
+      <div class="doc-body" id="docBody" contenteditable="${canEdit}" spellcheck="false">${bodyHtml}</div>
+      ${renderComments(tab, canComment)}
     `;
+
+    document.getElementById('docBody').addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
+    const sendBtn = document.getElementById('commentSendBtn');
+    if(sendBtn){
+      const doSend = ()=>{
+        const input = document.getElementById('commentInput');
+        const text = input.value.trim();
+        if(!text) return;
+        const author = state.previewAs ? (personsList().find(p=>p.email===state.previewAs)||{}).name || 'Guest' : OWNER.name;
+        tab.comments = tab.comments || [];
+        tab.comments.push({author, text, time:'Just now'});
+        input.value = '';
+        renderPage();
+      };
+      sendBtn.onclick = doSend;
+      document.getElementById('commentInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
+    }
   }
 
   function selectTab(id, opts){
@@ -775,9 +926,6 @@
       el.rail.classList.remove('rail-open');
     }
   }
-
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-  function escapeAttr(s){ return escapeHtml(s); }
 
   /* ---------- Toast ---------- */
   let toastTimer = null;
@@ -813,187 +961,167 @@
     }catch(e){}
   }
 
-  /* ---------- Modal: tab share ---------- */
-  function openTabShareModal(tabId){
-    const tab = getTab(tabId);
-    if(!tab) return;
+  /* ---------- Unified share modal (WHO + SCOPE + ROLE) ---------- */
+  function scopeOptions(){
+    return [{value:'document', label:'Entire document'}, ...state.tabs.map(t=>({value:t.id, label:t.name}))];
+  }
+  function scopeLabel(scope){ return scope==='document' ? DOC_TITLE : ((getTab(scope)||{}).name || scope); }
+
+  function openShareModal(scope){
     closeTabMenu();
-    renderTabShareModal(tab);
+    renderShareModal(scope);
     el.overlay.classList.add('open');
   }
 
-  function renderTabShareModal(tab){
-    const peopleHtml = tab.sharedWith.map((p,i)=>{
-      const c = colorFor(p.email);
-      return `
-      <div class="person-row">
-        <div class="avatar" style="background:${c}">${initials(p.name)}</div>
-        <div class="person-info">
-          <div class="person-name">${escapeHtml(p.name)}</div>
-          <div class="person-email">${escapeHtml(p.email)}</div>
-        </div>
-        <select class="md-select role-select" data-role-idx="${i}">
-          <option ${p.role==='Viewer'?'selected':''}>Viewer</option>
-          <option ${p.role==='Commenter'?'selected':''}>Commenter</option>
-          <option ${p.role==='Editor'?'selected':''}>Editor</option>
-        </select>
-        <button class="icon-btn sm person-remove" data-remove-idx="${i}" aria-label="Remove">${icon('close',18)}</button>
-      </div>`;
-    }).join('') || `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has been added to this tab yet.</p>`;
+  function renderShareModal(scope){
+    const grants = grantsForScope(scope);
+    const inherited = scope!=='document' ? grantsForScope('document') : [];
+    const ga = state.generalAccess[scope];
+    const linkOn = ga.mode === 'anyone';
 
-    const linkOn = tab.linkAccess === 'anyone';
+    const ownerRow = `
+      <div class="person-row">
+        <div class="avatar" style="background:${colorFor(OWNER.email)}">${initials(OWNER.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(OWNER.name)} (you)</div>
+          <div class="person-email">${escapeHtml(OWNER.email)}</div>
+        </div>
+        <span class="role-static">Owner</span>
+      </div>`;
+
+    const inheritedHtml = inherited.map(g=>`
+      <div class="person-row">
+        <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(g.name)}</div>
+          <div class="person-email">${escapeHtml(g.email)}</div>
+        </div>
+        <span class="role-static">${g.role} · Entire document</span>
+      </div>`).join('');
+
+    const grantsHtml = grants.map(g=>`
+      <div class="person-row">
+        <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(g.name)}</div>
+          <div class="person-email">${escapeHtml(g.email)}</div>
+        </div>
+        <select class="md-select role-select" data-grant-id="${g.id}">
+          <option ${g.role==='Viewer'?'selected':''}>Viewer</option>
+          <option ${g.role==='Commenter'?'selected':''}>Commenter</option>
+          <option ${g.role==='Editor'?'selected':''}>Editor</option>
+        </select>
+        <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
+      </div>`).join('');
+
+    const scopeCopy = scope==='document'
+      ? `People added here get access to <strong>every tab</strong> in "${escapeHtml(DOC_TITLE)}".`
+      : `People added here can open only the <strong>"${escapeHtml(scopeLabel(scope))}"</strong> tab. The rest of "${escapeHtml(DOC_TITLE)}" stays hidden from them.`;
+
     el.modal.innerHTML = `
       <div class="modal-head">
-        <div>
-          <h3>Share "${escapeHtml(tab.name)}"</h3>
-          <p>People you add here can open only this tab. The rest of "${DOC_TITLE}" stays hidden from them.</p>
+        <h3>Share "${escapeHtml(DOC_TITLE)}"</h3>
+        <div class="modal-head-actions">
+          <button class="icon-btn" aria-label="Help">${icon('help')}</button>
+          <button class="icon-btn" aria-label="Sharing settings">${icon('settings')}</button>
+          <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
         </div>
-        <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
       </div>
       <div class="modal-body">
-        <div class="scope-note">${icon('group',19)}<span><strong>Tab-only access.</strong> This is separate from the document's main sharing settings — adding someone here won't give them the other ${state.tabs.length - 1} tabs.</span></div>
+        <div class="scope-row">
+          <label for="scopeSelect">Scope</label>
+          <select class="md-select" id="scopeSelect">
+            ${scopeOptions().map(o=>`<option value="${o.value}" ${o.value===scope?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="scope-note">${icon('info',19)}<span>${scopeCopy}</span></div>
         <div class="field-row">
           <div class="text-field">
             <input type="email" id="addPersonInput" placeholder=" " />
-            <label>Add people by email</label>
+            <label>Add people, groups, spaces, and calendar events</label>
           </div>
           <button class="btn btn-filled" id="addPersonBtn">Add</button>
         </div>
-        <div class="people-list" id="peopleList">${peopleHtml}</div>
+        <div class="section-head">People with access</div>
+        <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${grantsHtml}</div>
         <div class="divider"></div>
+        <div class="section-head">General access</div>
         <div class="access-block">
           <div class="access-icon ${linkOn?'on':''}">${linkOn ? icon('public',20) : icon('lock',20)}</div>
           <div class="access-copy">
-            <div class="access-title">${linkOn ? 'Anyone with the link' : 'Restricted'}</div>
-            <div class="access-sub">${linkOn ? 'Anyone with this tab’s link can access it.' : 'Only people added above can open this tab.'}</div>
+            <select class="access-title-select" id="generalAccessSelect">
+              <option value="restricted" ${!linkOn?'selected':''}>Restricted</option>
+              <option value="anyone" ${linkOn?'selected':''}>Anyone with the link</option>
+            </select>
+            <div class="access-sub">${linkOn ? `Anyone on the internet with the link can ${ga.role.toLowerCase()}.` : 'Only people with access can open this.'}</div>
           </div>
-          <select class="md-select access-select" id="linkAccessSelect">
-            <option value="restricted" ${!linkOn?'selected':''}>Restricted</option>
-            <option value="anyone" ${linkOn?'selected':''}>Anyone with the link</option>
+          <select class="md-select access-select" id="generalRoleSelect" ${linkOn?'':'style="visibility:hidden;"'}>
+            <option ${ga.role==='Viewer'?'selected':''}>Viewer</option>
+            <option ${ga.role==='Commenter'?'selected':''}>Commenter</option>
+            <option ${ga.role==='Editor'?'selected':''}>Editor</option>
           </select>
         </div>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-text" id="copyTabLinkBtn">${icon('link',18)} Copy tab link</button>
+        <button class="btn btn-outlined-primary" id="copyLinkBtn">${icon('link',18)} Copy link</button>
         <button class="btn btn-filled" id="doneBtn">Done</button>
       </div>
     `;
 
     document.getElementById('modalCloseBtn').onclick = closeModal;
     document.getElementById('doneBtn').onclick = closeModal;
-    document.getElementById('addPersonBtn').onclick = ()=> addPersonToTab(tab);
+    document.getElementById('scopeSelect').onchange = (e)=> renderShareModal(e.target.value);
+    document.getElementById('addPersonBtn').onclick = ()=> addGrant(scope);
     document.getElementById('addPersonInput').addEventListener('keydown', e=>{
-      if(e.key === 'Enter'){ e.preventDefault(); addPersonToTab(tab); }
+      if(e.key === 'Enter'){ e.preventDefault(); addGrant(scope); }
     });
-    document.getElementById('linkAccessSelect').onchange = (e)=>{
-      tab.linkAccess = e.target.value;
-      tab.shared = tab.sharedWith.length > 0 || tab.linkAccess === 'anyone';
-      renderTabShareModal(tab);
+    document.getElementById('generalAccessSelect').onchange = (e)=>{
+      state.generalAccess[scope].mode = e.target.value;
+      renderShareModal(scope);
       renderTabs();
     };
-    document.getElementById('copyTabLinkBtn').onclick = ()=>{
-      const url = `https://docs.example/d/8f3k2q/tab/${tab.id}?access=${tab.linkAccess}`;
-      copyToClipboard(url);
-      showToast('Tab link copied.');
+    document.getElementById('generalRoleSelect').onchange = (e)=>{
+      state.generalAccess[scope].role = e.target.value;
+      renderShareModal(scope);
     };
-    el.modal.querySelectorAll('[data-remove-idx]').forEach(btn=>{
+    document.getElementById('copyLinkBtn').onclick = ()=>{
+      const url = scope==='document' ? 'https://docs.example/d/8f3k2q' : `https://docs.example/d/8f3k2q/tab/${scope}`;
+      copyToClipboard(url);
+      showToast('Link copied.');
+    };
+    el.modal.querySelectorAll('[data-remove-grant]').forEach(btn=>{
       btn.onclick = ()=>{
-        const idx = Number(btn.dataset.removeIdx);
-        tab.sharedWith.splice(idx,1);
-        tab.shared = tab.sharedWith.length > 0 || tab.linkAccess === 'anyone';
-        renderTabShareModal(tab);
+        state.grants = state.grants.filter(g=>g.id!==btn.dataset.removeGrant);
+        renderShareModal(scope);
         renderTabs();
+        renderPreviewSelect();
       };
     });
-    el.modal.querySelectorAll('[data-role-idx]').forEach(sel=>{
+    el.modal.querySelectorAll('[data-grant-id]').forEach(sel=>{
       sel.onchange = ()=>{
-        const idx = Number(sel.dataset.roleIdx);
-        tab.sharedWith[idx].role = sel.value;
-        showToast(`${tab.sharedWith[idx].name} is now ${sel.value.toLowerCase()} on this tab.`);
+        const g = state.grants.find(g=>g.id===sel.dataset.grantId);
+        if(g){ g.role = sel.value; showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scope)}".`); }
       };
     });
   }
 
-  function addPersonToTab(tab){
+  function addGrant(scope){
     const input = document.getElementById('addPersonInput');
     const val = input.value.trim();
     if(!val) return;
-    if(!/^\S+@\S+\.\S+$/.test(val)){ showToast('Enter a valid email address.'); return; }
-    if(tab.sharedWith.some(p=>p.email.toLowerCase() === val.toLowerCase())){
-      showToast('Already has access to this tab.');
+    if(!validEmail(val)){ showToast('Enter a valid email address.'); return; }
+    if(grantsForScope(scope).some(g=>g.email.toLowerCase()===val.toLowerCase())){
+      showToast('Already has access to this scope.');
       input.value = '';
       return;
     }
-    const namePart = val.split('@')[0].replace(/[._]/g,' ');
-    const name = namePart.replace(/\b\w/g, c=>c.toUpperCase());
-    tab.sharedWith.push({name, email: val, role:'Commenter'});
-    tab.shared = true;
+    const name = deriveName(val);
+    state.grants.push({id:'grant-'+Math.random().toString(36).slice(2,8), email:val, name, scope, role:'Viewer'});
     input.value = '';
-    renderTabShareModal(tab);
+    renderShareModal(scope);
     renderTabs();
-    showToast(`${name} was added to "${tab.name}".`);
-  }
-
-  /* ---------- Modal: document share ---------- */
-  function openDocShareModal(){
-    const people = [
-      {name:OWNER.name, email:OWNER.email, role:'Owner'},
-      {name:'Sam Lee', email:'sam@brightpath.io', role:'Editor'},
-      {name:'Design Team', email:'design-team@brightpath.io', role:'Viewer'}
-    ];
-    const peopleHtml = people.map(p=>{
-      const c = colorFor(p.email);
-      return `
-      <div class="person-row">
-        <div class="avatar" style="background:${c}">${initials(p.name)}</div>
-        <div class="person-info">
-          <div class="person-name">${escapeHtml(p.name)}</div>
-          <div class="person-email">${escapeHtml(p.email)}</div>
-        </div>
-        <span style="font-size:12.5px; color:var(--text-secondary); padding:6px 8px;">${p.role}</span>
-      </div>`;
-    }).join('');
-
-    el.modal.innerHTML = `
-      <div class="modal-head">
-        <div>
-          <h3>Share document</h3>
-          <p>This shares all ${state.tabs.length} tabs in "${DOC_TITLE}" — including Budget (Confidential).</p>
-        </div>
-        <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
-      </div>
-      <div class="modal-body">
-        <div class="scope-note warn">${icon('info',19)}<span>Need to give someone just one section? Use <strong>Share this tab…</strong> from a tab's menu instead — it keeps the rest of the document private.</span></div>
-        <div class="field-row">
-          <div class="text-field">
-            <input type="email" id="addPersonInput" placeholder=" " />
-            <label>Add people by email</label>
-          </div>
-          <button class="btn btn-filled" id="addPersonBtn">Add</button>
-        </div>
-        <div class="people-list">${peopleHtml}</div>
-        <div class="divider"></div>
-        <div class="access-block">
-          <div class="access-icon">${icon('lock',20)}</div>
-          <div class="access-copy">
-            <div class="access-title">Restricted</div>
-            <div class="access-sub">Only people listed above can open this document.</div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-text" id="copyDocLinkBtn">${icon('link',18)} Copy link</button>
-        <button class="btn btn-filled" id="doneBtn">Done</button>
-      </div>
-    `;
-    document.getElementById('modalCloseBtn').onclick = closeModal;
-    document.getElementById('doneBtn').onclick = closeModal;
-    document.getElementById('addPersonBtn').onclick = ()=> showToast('Adding whole-document collaborators is outside this prototype’s scope.');
-    document.getElementById('copyDocLinkBtn').onclick = ()=>{
-      copyToClipboard('https://docs.example/d/8f3k2q');
-      showToast('Document link copied.');
-    };
-    el.overlay.classList.add('open');
+    renderPreviewSelect();
+    showToast(`${name} was given access to "${scopeLabel(scope)}".`);
   }
 
   function closeModal(){ el.overlay.classList.remove('open'); }
@@ -1002,15 +1130,19 @@
   function makeTab(name, parentId){
     const id = 'tab-' + Math.random().toString(36).slice(2,8);
     return {
-      id, name, parentId: parentId||null, emoji:null, accent: colorFor(id),
-      shared:false, sharedWith:[], linkAccess:'restricted', renaming:true,
+      id, name, parentId: parentId||null, emoji:null, accent: colorFor(id), comments:[],
       content:{ kicker:`Section ${state.tabs.length+1}`, title:name, body:[{p:'Start writing this section — it isn’t shared with anyone until you choose to share it.'}] }
     };
+  }
+  function ensureGeneralAccessEntry(id){
+    if(!state.generalAccess[id]) state.generalAccess[id] = {mode:'restricted', role:'Viewer'};
   }
 
   function addTab(){
     const tab = makeTab('Untitled tab', null);
+    tab.renaming = true;
     state.tabs.push(tab);
+    ensureGeneralAccessEntry(tab.id);
     state.activeTabId = tab.id;
     renderTabs();
     renderPage();
@@ -1022,6 +1154,8 @@
     const parent = getTab(parentId);
     if(!parent) return;
     const tab = makeTab('Untitled subtab', parentId);
+    tab.renaming = true;
+    ensureGeneralAccessEntry(tab.id);
     const insertAt = lastDescendantIndex(parentId) + 1;
     state.tabs.splice(insertAt, 0, tab);
     state.activeTabId = tab.id;
@@ -1063,10 +1197,10 @@
     copy.id = 'tab-' + Math.random().toString(36).slice(2,8);
     copy.name = tab.name + ' (copy)';
     copy.content.title = copy.name;
-    copy.shared = false;
-    copy.sharedWith = [];
-    copy.linkAccess = 'restricted';
+    copy.comments = [];
     delete copy.renaming;
+    delete copy.editedHtml;
+    ensureGeneralAccessEntry(copy.id);
     const insertAt = tab.parentId ? state.tabs.indexOf(tab)+1 : lastDescendantIndex(id)+1;
     state.tabs.splice(insertAt, 0, copy);
     renderTabs();
@@ -1105,6 +1239,40 @@
     deletedTimer = setTimeout(()=>{ deletedStash = null; }, 6000);
   }
 
+  function moveTab(id, dir){
+    const tab = getTab(id);
+    if(!tab) return;
+    const blocks = getBlocks();
+    if(tab.parentId){
+      const block = blocks.find(b=>b[0].id===tab.parentId);
+      if(!block) return;
+      const i = block.findIndex(t=>t.id===id);
+      const j = i+dir;
+      if(j<1 || j>=block.length) return;
+      [block[i], block[j]] = [block[j], block[i]];
+    } else {
+      const bi = blocks.findIndex(b=>b[0].id===id);
+      const bj = bi+dir;
+      if(bj<0 || bj>=blocks.length) return;
+      [blocks[bi], blocks[bj]] = [blocks[bj], blocks[bi]];
+    }
+    setFromBlocks(blocks);
+    renderTabs();
+  }
+
+  function moveTabInto(id, targetId){
+    const tab = getTab(id);
+    if(!tab || tab.id === targetId) return;
+    const idx = state.tabs.indexOf(tab);
+    state.tabs.splice(idx, 1);
+    tab.parentId = targetId;
+    const insertAt = lastDescendantIndex(targetId) + 1;
+    state.tabs.splice(insertAt, 0, tab);
+    closeTabMenu();
+    renderTabs();
+    showToast(`Moved "${tab.name}" into "${getTab(targetId).name}".`);
+  }
+
   /* ---------- Misc chrome ---------- */
   function toggleStar(){
     state.starred = !state.starred;
@@ -1135,6 +1303,7 @@
   });
 
   el.tabList.addEventListener('dblclick', (e)=>{
+    if(isGuestView()) return;
     const row = e.target.closest('.tab-row');
     if(row) startRename(row.dataset.tab);
   });
@@ -1151,7 +1320,7 @@
       const emojiBtn = e.target.closest('[data-emoji]');
       if(emojiBtn){
         const tab = getTab(emojiBtn.dataset.id);
-        if(tab){ tab.emoji = emojiBtn.dataset.emoji; }
+        if(tab) tab.emoji = emojiBtn.dataset.emoji;
         closeTabMenu();
         renderTabs();
         return;
@@ -1160,7 +1329,7 @@
       if(item){
         const {action, id, target} = item.dataset;
         const tab = getTab(id);
-        if(action === 'share') openTabShareModal(id);
+        if(action === 'share') openShareModal(id);
         if(action === 'rename') startRename(id);
         if(action === 'duplicate') duplicateTab(id);
         if(action === 'delete') deleteTab(id);
@@ -1191,14 +1360,17 @@
     }
   });
 
-  el.shareDocBtn.addEventListener('click', openDocShareModal);
+  el.shareDocBtn.addEventListener('click', ()=> openShareModal('document'));
   el.addTabBtn.addEventListener('click', addTab);
   el.railToggle.addEventListener('click', ()=> el.rail.classList.toggle('rail-open'));
   el.starBtn.addEventListener('click', toggleStar);
   el.zoomSelect.addEventListener('change', applyZoom);
   el.toolbarCollapseBtn.addEventListener('click', toggleToolbar);
+  el.previewSelect.addEventListener('change', (e)=> applyPreview(e.target.value));
 
   /* ---------- Init ---------- */
+  state.tabs.forEach(t=> ensureGeneralAccessEntry(t.id));
+  renderPreviewSelect();
   renderTabs();
   renderPage();
 })();
