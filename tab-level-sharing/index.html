@@ -219,11 +219,13 @@
   .tab-kebab{ flex-shrink:0; opacity:0; }
   .tab-row:hover .tab-kebab, .tab-row.menu-open .tab-kebab{ opacity:1; }
 
-  .add-tab-btn{
-    margin:10px 16px 16px; background:none; border:1px dashed var(--border-strong); color:var(--text-secondary);
-    border-radius:var(--radius-full); padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:13px;
+  .add-tab-row{
+    margin:2px 12px 14px; background:none; border:none; color:var(--text-secondary);
+    border-radius:var(--radius-sm); padding:8px 8px 8px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; font-size:13.5px;
+    width:calc(100% - 24px);
   }
-  .add-tab-btn:hover:not(:disabled){ background:color-mix(in srgb, var(--text) 5%, transparent); color:var(--text); }
+  .add-tab-row .material-symbols-outlined{ font-size:19px; }
+  .add-tab-row:hover:not(:disabled){ background:color-mix(in srgb, var(--text) 6%, transparent); color:var(--text); }
 
   /* menu popover */
   .popover{ position:absolute; z-index:40; min-width:200px; background:var(--surface-container-high); border-radius:var(--radius-sm); box-shadow:var(--shadow-2); padding:8px; }
@@ -318,8 +320,6 @@
   }
   .access-sub{ font-size:12px; color:var(--text-secondary); line-height:1.4; }
   .access-select{ font-size:12.5px; padding:8px 30px 8px 12px; flex-shrink:0; }
-  .scope-note{ display:flex; gap:10px; align-items:flex-start; background:var(--primary-soft); color:var(--on-primary-soft); border-radius:var(--radius-md); padding:12px 14px; font-size:12.5px; line-height:1.5; margin-bottom:18px; }
-  .scope-note .material-symbols-outlined{ font-size:19px; margin-top:1px; }
   .modal-foot{ padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
 
   /* ===== Snackbar ===== */
@@ -470,8 +470,8 @@
       <nav class="rail" id="rail">
         <div class="rail-header"><span>Tabs</span></div>
         <ul class="tab-list" id="tabList"></ul>
-        <button class="add-tab-btn" id="addTabBtn">
-          <span class="material-symbols-outlined" style="font-size:18px;">add</span> Add tab
+        <button class="add-tab-row" id="addTabBtn" aria-label="Add tab">
+          <span class="material-symbols-outlined">add</span> Add tab
         </button>
       </nav>
       <main class="canvas" id="canvas">
@@ -1087,10 +1087,6 @@
         <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
       </div>`).join('');
 
-    const scopeCopy = scope==='document'
-      ? `People added here get access to <strong>every tab</strong> in "${escapeHtml(DOC_TITLE)}".`
-      : `People added here can open only the <strong>"${escapeHtml(scopeLabel(scope))}"</strong> tab. The rest of "${escapeHtml(DOC_TITLE)}" stays hidden from them.`;
-
     el.modal.innerHTML = `
       <div class="modal-head">
         <h3>Share "${escapeHtml(DOC_TITLE)}"</h3>
@@ -1107,7 +1103,6 @@
             ${scopeOptions().map(o=>`<option value="${o.value}" ${o.value===scope?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}
           </select>
         </div>
-        <div class="scope-note">${icon('info',19)}<span>${scopeCopy}</span></div>
         <div class="field-row">
           <div class="text-field">
             <input type="email" id="addPersonInput" placeholder=" " />
@@ -1173,7 +1168,14 @@
     el.modal.querySelectorAll('[data-grant-id]').forEach(sel=>{
       sel.onchange = ()=>{
         const g = state.grants.find(g=>g.id===sel.dataset.grantId);
-        if(g){ g.role = sel.value; showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scope)}".`); }
+        if(g){
+          g.role = sel.value;
+          const preferredTab = scope!=='document' ? scope : undefined;
+          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scope)}".`, 'Preview', ()=>{
+            closeModal();
+            goToRecipientView(g.email, preferredTab);
+          });
+        }
       };
     });
     el.modal.querySelectorAll('[data-preview]').forEach(btn=>{
@@ -1201,7 +1203,11 @@
     input.value = '';
     renderShareModal(scope);
     renderTabs();
-    showToast(`${name} was given access to "${scopeLabel(scope)}".`);
+    const preferredTab = scope!=='document' ? scope : undefined;
+    showToast(`${name} was given access to "${scopeLabel(scope)}".`, 'Preview', ()=>{
+      closeModal();
+      goToRecipientView(val, preferredTab);
+    });
   }
 
   function closeModal(){ el.overlay.classList.remove('open'); }
