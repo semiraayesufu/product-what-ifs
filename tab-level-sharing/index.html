@@ -29,6 +29,7 @@
     --demo-bg:#fff8e1;
     --demo-border:#e8d48a;
     --demo-text:#7a5c00;
+    --comment-highlight:#fef3c0;
     --scrim:rgba(32,33,36,.55);
     --shadow-1:0 1px 2px rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
     --shadow-2:0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
@@ -47,6 +48,7 @@
       --text:#e8eaed; --text-secondary:#9aa0a6; --text-tertiary:#80868b;
       --warn:#fdd663; --warn-soft:#3a341f; --error:#f28b82; --error-soft:#3a2725;
       --demo-bg:#332b12; --demo-border:#5c4b19; --demo-text:#e8d48a;
+      --comment-highlight:rgba(255,214,79,.22);
       --scrim:rgba(0,0,0,.6);
       --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
       --shadow-2:0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
@@ -62,6 +64,7 @@
     --text:#e8eaed; --text-secondary:#9aa0a6; --text-tertiary:#80868b;
     --warn:#fdd663; --warn-soft:#3a341f; --error:#f28b82; --error-soft:#3a2725;
     --demo-bg:#332b12; --demo-border:#5c4b19; --demo-text:#e8d48a;
+    --comment-highlight:rgba(255,214,79,.22);
     --scrim:rgba(0,0,0,.6);
     --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
     --shadow-2:0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
@@ -242,6 +245,7 @@
 
   /* ===== Canvas / paper ===== */
   .canvas{ flex:1 1 auto; overflow-y:auto; padding:40px 24px 100px; display:flex; justify-content:center; min-width:0; }
+  .doc-with-margin{ display:flex; align-items:flex-start; gap:28px; }
   .page-scale{ transform-origin:top center; }
   .page{ width:680px; max-width:100%; background:var(--surface); box-shadow:var(--paper-shadow); border-radius:2px; padding:56px 64px; font-family:var(--font-doc); color:var(--text); line-height:1.65; }
   .page-top-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
@@ -269,18 +273,37 @@
   .doc-body[contenteditable="true"]:hover{ outline-color:var(--border-strong); }
   .doc-body[contenteditable="true"]:focus{ outline-color:var(--primary); outline-style:solid; }
 
-  .comments-section{ margin-top:28px; padding-top:20px; border-top:1px solid var(--border); font-family:var(--font-ui); }
-  .comments-head{ display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; }
-  .comment-row{ display:flex; gap:10px; margin-bottom:14px; }
-  .comment-body{ flex:1 1 auto; min-width:0; }
-  .comment-head{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
-  .comment-author{ font-size:13px; font-weight:600; }
-  .comment-time{ font-size:11.5px; color:var(--text-tertiary); }
-  .comment-text{ font-size:13.5px; line-height:1.5; }
-  .comment-empty{ font-size:12.5px; color:var(--text-tertiary); font-style:italic; margin:0 0 12px; }
-  .comment-add{ display:flex; gap:8px; margin-top:8px; }
-  .comment-add input{ flex:1 1 auto; min-width:0; border:1px solid var(--border); border-radius:var(--radius-full); padding:9px 16px; background:var(--surface); color:var(--text); font-size:13px; }
-  .comment-add input:focus{ border-color:var(--primary); }
+  /* ===== Comments: inline highlight + margin cards (matches Google Docs) ===== */
+  .comment-highlight{ background:var(--comment-highlight); border-radius:2px; cursor:pointer; }
+  .comment-fab{
+    position:fixed; z-index:150; width:36px; height:36px; border-radius:50%;
+    background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-2);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-secondary);
+  }
+  .comment-fab:hover{ background:var(--primary-soft); color:var(--primary); }
+  .comment-margin{ width:260px; flex-shrink:0; font-family:var(--font-ui); }
+  .comment-margin-inner{ position:relative; }
+  .comment-empty-margin{ font-size:12px; color:var(--text-tertiary); line-height:1.5; padding:2px 4px; }
+  .comment-card{
+    position:absolute; left:0; right:0; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); box-shadow:var(--shadow-1); padding:12px 14px; transition:top .15s ease, box-shadow .15s ease;
+  }
+  .comment-card.flash{ box-shadow:0 0 0 2px var(--primary); }
+  .comment-card-head{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .comment-card-name{ font-size:12.5px; font-weight:600; }
+  .comment-card-time{ font-size:11px; color:var(--text-tertiary); margin-left:auto; }
+  .comment-card-text{ font-size:13px; line-height:1.5; color:var(--text); white-space:pre-wrap; }
+  .comment-composer textarea{
+    width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:13px;
+    font-family:inherit; resize:vertical; min-height:52px; color:var(--text); background:var(--surface);
+  }
+  .comment-composer textarea:focus{ border-color:var(--primary); }
+  .comment-composer-actions{ display:flex; justify-content:flex-end; gap:6px; margin-top:8px; }
+  .comment-composer-actions .btn{ height:32px; padding:0 14px; font-size:13px; }
+  @media (max-width: 960px){
+    .comment-margin{ display:none; }
+    .comment-fab{ display:none; }
+  }
 
   /* ===== Modal ===== */
   .overlay{ position:fixed; inset:0; background:var(--scrim); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
@@ -475,7 +498,10 @@
         </button>
       </nav>
       <main class="canvas" id="canvas">
-        <div class="page-scale" id="pageScale"><article class="page" id="page"></article></div>
+        <div class="doc-with-margin">
+          <div class="page-scale" id="pageScale"><article class="page" id="page"></article></div>
+          <div class="comment-margin" id="commentMargin"></div>
+        </div>
       </main>
     </div>
   </div>
@@ -487,7 +513,10 @@
     <div class="recipient-tabswitch" id="recipientTabSwitch" style="display:none;"></div>
     <div id="recipientCanvasWrap">
       <main class="canvas">
-        <article class="page" id="recipientPage"></article>
+        <div class="doc-with-margin">
+          <article class="page" id="recipientPage"></article>
+          <div class="comment-margin" id="recipientCommentMargin"></div>
+        </div>
       </main>
     </div>
     <div class="recipient-noaccess" id="recipientNoAccess" hidden>
@@ -546,13 +575,13 @@
       {
         id:"market-research", name:"Market Research", parentId:null, emoji:null, accent:"#8430ce",
         comments: [
-          {author:"Maya Singh", text:"Can we double-check the TAM figure against the latest Frost & Sullivan report? The $4.8B number looks dated.", time:"2h ago"}
+          {id:"c-maya-tam", author:"Maya Singh", text:"Can we double-check this against the latest Frost & Sullivan report? The $4.8B number looks dated.", time:"2h ago"}
         ],
         content:{
           kicker:"Section 2", title:"Market Research",
           body:[
             {p:"Sizing, competitive landscape, and customer segments for diagnostic-support AI in mid-size hospital networks."},
-            {ul:["TAM: ~$4.8B across US hospital networks; SAM (200–800 beds, radiology-first): ~$960M.","Three incumbents hold 70% share; none focus specifically on the mid-size segment.","Buyer profile: VP of Radiology or CMIO, 4–6 month sales cycle, procurement-led.","Primary objection in early interviews: integration effort with existing PACS systems."]},
+            {ul:["<span class=\"comment-highlight\" data-comment-id=\"c-maya-tam\">TAM: ~$4.8B across US hospital networks</span>; SAM (200–800 beds, radiology-first): ~$960M.","Three incumbents hold 70% share; none focus specifically on the mid-size segment.","Buyer profile: VP of Radiology or CMIO, 4–6 month sales cycle, procurement-led.","Primary objection in early interviews: integration effort with existing PACS systems."]},
             {p:"Full interview notes and the competitor teardown live in the shared drive — this tab is the summary version for review."}
           ]
         }
@@ -611,6 +640,7 @@
     tabList: document.getElementById('tabList'),
     page: document.getElementById('page'),
     pageScale: document.getElementById('pageScale'),
+    commentMargin: document.getElementById('commentMargin'),
     shareDocBtn: document.getElementById('shareDocBtn'),
     addTabBtn: document.getElementById('addTabBtn'),
     overlay: document.getElementById('overlay'),
@@ -801,20 +831,177 @@
     return `<span class="role-pill role-${cls}">${labels[role] || 'No access'}</span>`;
   }
 
-  function renderComments(tab, canComment){
-    const list = (tab.comments||[]).map(c=>`
-      <div class="comment-row">
-        <div class="avatar" style="background:${colorFor(c.author)}">${initials(c.author)}</div>
-        <div class="comment-body">
-          <div class="comment-head"><span class="comment-author">${escapeHtml(c.author)}</span><span class="comment-time">${escapeHtml(c.time)}</span></div>
-          <div class="comment-text">${escapeHtml(c.text)}</div>
-        </div>
-      </div>`).join('') || `<p class="comment-empty">No comments yet on this tab.</p>`;
-    const addBox = canComment
-      ? `<div class="comment-add"><input type="text" class="comment-input" placeholder="Comment on this tab…" /><button class="btn btn-tonal comment-send-btn">Comment</button></div>`
-      : `<p class="comment-empty">Viewers can't comment on this tab.</p>`;
-    return `<div class="comments-section"><div class="comments-head">${icon('chat_bubble',16)} Comments</div>${list}${addBox}</div>`;
+  /* ---------- Comments: select text -> highlight + margin card (Google Docs style) ---------- */
+  let pendingComment = null;
+
+  function wrapRangeInHighlight(range, commentId){
+    const root = range.commonAncestorContainer;
+    const walkRoot = root.nodeType === 3 ? root.parentNode : root;
+    const walker = document.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT, {
+      acceptNode(node){ return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }
+    });
+    const nodes = [];
+    let n;
+    while(n = walker.nextNode()) nodes.push(n);
+
+    nodes.forEach(node=>{
+      const start = node === range.startContainer ? range.startOffset : 0;
+      const end = node === range.endContainer ? range.endOffset : node.length;
+      if(start >= end) return;
+      const before = node.textContent.slice(0, start);
+      const middle = node.textContent.slice(start, end);
+      const after = node.textContent.slice(end);
+      const span = document.createElement('span');
+      span.className = 'comment-highlight';
+      span.dataset.commentId = commentId;
+      span.textContent = middle;
+      const parent = node.parentNode;
+      const afterNode = document.createTextNode(after);
+      parent.replaceChild(afterNode, node);
+      parent.insertBefore(span, afterNode);
+      parent.insertBefore(document.createTextNode(before), span);
+    });
   }
+
+  function unwrapHighlight(pageEl, commentId){
+    pageEl.querySelectorAll(`[data-comment-id="${commentId}"]`).forEach(span=>{
+      const parent = span.parentNode;
+      parent.replaceChild(document.createTextNode(span.textContent), span);
+      parent.normalize();
+    });
+  }
+
+  function removeCommentFab(){ document.getElementById('commentFab')?.remove(); }
+
+  function showCommentFab(rect, range, meta){
+    removeCommentFab();
+    const btn = document.createElement('button');
+    btn.id = 'commentFab';
+    btn.className = 'comment-fab';
+    btn.innerHTML = icon('add_comment', 18);
+    btn.setAttribute('aria-label', 'Add comment');
+    btn.style.top = Math.min(window.innerHeight - 44, rect.bottom + 8) + 'px';
+    btn.style.left = Math.min(window.innerWidth - 44, Math.max(8, rect.right - 10)) + 'px';
+    btn.addEventListener('mousedown', ev=> ev.preventDefault());
+    btn.addEventListener('click', ()=>{
+      startCommentComposer(range.cloneRange(), meta);
+      removeCommentFab();
+    });
+    document.body.appendChild(btn);
+  }
+
+  function startCommentComposer(range, meta){
+    if(pendingComment){
+      unwrapHighlight(pendingComment.pageEl, pendingComment.id);
+      pendingComment.tab.editedHtml = pendingComment.pageEl.querySelector('.doc-body').innerHTML;
+    }
+    const tempId = 'c-' + Math.random().toString(36).slice(2,9);
+    wrapRangeInHighlight(range, tempId);
+    meta.tab.editedHtml = meta.pageEl.querySelector('.doc-body').innerHTML;
+    pendingComment = { id: tempId, tab: meta.tab, authorName: meta.authorName, pageEl: meta.pageEl, marginEl: meta.marginEl, canComment: meta.canComment };
+    renderCommentMargin(meta.marginEl, meta.pageEl, meta.tab, meta.canComment);
+  }
+
+  function renderCommentMargin(marginEl, pageEl, tab, canComment){
+    if(!marginEl) return;
+    const comments = (tab.comments || []).slice();
+    const items = comments.map(c=>({type:'comment', id:c.id, data:c}));
+    if(pendingComment && pendingComment.tab === tab) items.push({type:'pending', id:pendingComment.id});
+
+    if(!items.length){
+      marginEl.innerHTML = canComment ? `<p class="comment-empty-margin">Select text in the document to leave a comment.</p>` : '';
+      return;
+    }
+
+    const withPos = items.map(item=>{
+      const span = pageEl.querySelector(`[data-comment-id="${item.id}"]`);
+      return { item, top: span ? span.offsetTop : 0 };
+    }).sort((a,b)=> a.top - b.top);
+
+    marginEl.innerHTML = `<div class="comment-margin-inner">${withPos.map(({item})=>{
+      if(item.type === 'pending'){
+        return `<div class="comment-card comment-composer" data-comment-card="${item.id}" style="top:0px;">
+          <textarea placeholder="Comment"></textarea>
+          <div class="comment-composer-actions">
+            <button class="btn btn-text" data-cancel-comment="${item.id}">Cancel</button>
+            <button class="btn btn-filled" data-submit-comment="${item.id}">Comment</button>
+          </div>
+        </div>`;
+      }
+      const c = item.data;
+      return `<div class="comment-card" data-comment-card="${item.id}" style="top:0px;">
+        <div class="comment-card-head">
+          <div class="avatar" style="width:22px;height:22px;font-size:10px;background:${colorFor(c.author)}">${initials(c.author)}</div>
+          <span class="comment-card-name">${escapeHtml(c.author)}</span>
+          <span class="comment-card-time">${escapeHtml(c.time)}</span>
+        </div>
+        <div class="comment-card-text">${escapeHtml(c.text)}</div>
+      </div>`;
+    }).join('')}</div>`;
+
+    let cursor = 0, maxBottom = 0;
+    withPos.forEach(({item, top})=>{
+      const cardEl = marginEl.querySelector(`[data-comment-card="${item.id}"]`);
+      const cardTop = Math.max(top, cursor);
+      cardEl.style.top = cardTop + 'px';
+      cursor = cardTop + cardEl.offsetHeight + 12;
+      maxBottom = Math.max(maxBottom, cardTop + cardEl.offsetHeight);
+    });
+    marginEl.querySelector('.comment-margin-inner').style.minHeight = maxBottom + 'px';
+
+    const composerEl = marginEl.querySelector('.comment-composer');
+    if(composerEl){
+      const ta = composerEl.querySelector('textarea');
+      requestAnimationFrame(()=> ta.focus());
+      marginEl.querySelector('[data-submit-comment]').onclick = ()=>{
+        const text = ta.value.trim();
+        if(!text) return;
+        tab.comments = tab.comments || [];
+        tab.comments.push({id: pendingComment.id, author: pendingComment.authorName, text, time:'Just now'});
+        pendingComment = null;
+        renderCommentMargin(marginEl, pageEl, tab, canComment);
+      };
+      marginEl.querySelector('[data-cancel-comment]').onclick = ()=>{
+        unwrapHighlight(pageEl, pendingComment.id);
+        tab.editedHtml = pageEl.querySelector('.doc-body').innerHTML;
+        pendingComment = null;
+        renderCommentMargin(marginEl, pageEl, tab, canComment);
+      };
+    }
+  }
+
+  document.addEventListener('mousedown', (e)=>{
+    if(!e.target.closest || !e.target.closest('#commentFab')) removeCommentFab();
+  });
+
+  document.addEventListener('mouseup', (e)=>{
+    setTimeout(()=>{
+      const sel = window.getSelection();
+      removeCommentFab();
+      if(!sel || sel.isCollapsed || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if(range.collapsed) return;
+      const anchorNode = range.commonAncestorContainer;
+      const anchorEl = anchorNode.nodeType === 1 ? anchorNode : anchorNode.parentElement;
+      const docBodyEl = anchorEl ? anchorEl.closest('.doc-body') : null;
+      if(!docBodyEl || !docBodyEl.__commentMeta || !docBodyEl.__commentMeta.canComment) return;
+      const rect = range.getBoundingClientRect();
+      if(!rect || (rect.width === 0 && rect.height === 0)) return;
+      showCommentFab(rect, range, docBodyEl.__commentMeta);
+    }, 0);
+  });
+
+  document.addEventListener('click', (e)=>{
+    const hl = e.target.closest && e.target.closest('.comment-highlight');
+    if(hl){
+      const card = document.querySelector(`[data-comment-card="${hl.dataset.commentId}"]`);
+      if(card){
+        card.scrollIntoView({block:'nearest', behavior:'smooth'});
+        card.classList.add('flash');
+        setTimeout(()=> card.classList.remove('flash'), 900);
+      }
+    }
+  });
 
   function buildTabContentHtml(tab, access, mode){
     const c = tab.content;
@@ -861,27 +1048,16 @@
       <div style="height:14px"></div>
       ${noteHtml}
       <div class="doc-body" contenteditable="${canEdit}" spellcheck="false">${bodyHtml}</div>
-      ${renderComments(tab, canComment)}
     `;
   }
 
-  function wireTabContentEvents(container, tab, access, rerender){
-    container.querySelector('.doc-body').addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
-    const sendBtn = container.querySelector('.comment-send-btn');
-    if(sendBtn){
-      const doSend = ()=>{
-        const input = container.querySelector('.comment-input');
-        const text = input.value.trim();
-        if(!text) return;
-        const author = access.role === 'Owner' ? OWNER.name : (personsList().find(p=>p.email===state.previewAs)||{}).name || 'Guest';
-        tab.comments = tab.comments || [];
-        tab.comments.push({author, text, time:'Just now'});
-        input.value = '';
-        rerender();
-      };
-      sendBtn.onclick = doSend;
-      container.querySelector('.comment-input').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
-    }
+  function wireTabContentEvents(pageEl, marginEl, tab, access){
+    const canComment = access.role === 'Owner' || access.role === 'Editor' || access.role === 'Commenter';
+    const authorName = access.role === 'Owner' ? OWNER.name : (personsList().find(p=>p.email===state.previewAs)||{}).name || 'Guest';
+    const docBody = pageEl.querySelector('.doc-body');
+    docBody.addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
+    docBody.__commentMeta = { tab, canComment, authorName, pageEl, marginEl };
+    renderCommentMargin(marginEl, pageEl, tab, canComment);
   }
 
   function renderPage(){
@@ -889,7 +1065,7 @@
     if(!tab){ el.page.innerHTML=''; return; }
     const access = {role:'Owner', via:null};
     el.page.innerHTML = buildTabContentHtml(tab, access, 'owner');
-    wireTabContentEvents(el.page, tab, access, renderPage);
+    wireTabContentEvents(el.page, el.commentMargin, tab, access);
   }
 
   function selectTab(id, opts){
@@ -911,8 +1087,9 @@
     if(!tab) return;
     const access = accessFor(state.previewAs, tab.id) || {role:null, via:null};
     const container = document.getElementById('recipientPage');
+    const marginEl = document.getElementById('recipientCommentMargin');
     container.innerHTML = buildTabContentHtml(tab, access, 'recipient');
-    wireTabContentEvents(container, tab, access, renderRecipientPage);
+    wireTabContentEvents(container, marginEl, tab, access);
   }
 
   function renderRecipientHeader(email){
