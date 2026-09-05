@@ -88,20 +88,23 @@
 
   .app{ display:flex; flex-direction:column; height:100vh; min-height:600px; }
   .app-shell{ display:flex; flex-direction:column; height:100vh; min-height:600px; }
+  #ownerView[hidden], #recipientView[hidden]{ display:none; }
 
-  /* ===== Prototype control strip (not part of the Docs chrome) ===== */
-  .proto-bar{
-    flex-shrink:0; display:flex; align-items:center; gap:10px; padding:8px 16px;
-    background:var(--demo-bg); border-bottom:1px dashed var(--demo-border); font-size:12.5px; color:var(--demo-text);
-  }
-  .proto-chip{ background:var(--demo-text); color:var(--demo-bg); font-weight:700; letter-spacing:.06em; font-size:10px; padding:4px 9px; border-radius:999px; text-transform:uppercase; flex-shrink:0; }
-  .proto-bar label{ font-weight:600; flex-shrink:0; }
-  .proto-bar select{ border:1px solid var(--demo-border); background:var(--surface); color:var(--text); border-radius:var(--radius-xs); padding:5px 26px 5px 10px; cursor:pointer; flex-shrink:0;
-    appearance:none; -webkit-appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'><path d='M7 10l5 5 5-5z' fill='%235f6368'/></svg>");
-    background-repeat:no-repeat; background-position:right 4px center;
-  }
-  .proto-hint{ color:var(--demo-text); opacity:.85; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* ===== Recipient page (separate workflow: what a tab guest lands on) ===== */
+  .recipient-badge{ background:var(--demo-bg); color:var(--demo-text); border:1px solid var(--demo-border); font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.05em; flex-shrink:0; }
+  .recipient-shell{ min-height:100vh; display:flex; flex-direction:column; background:var(--surface-container); }
+  .recipient-topbar{ display:flex; align-items:center; gap:14px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; flex-shrink:0; }
+  .recipient-back{ display:flex; align-items:center; gap:6px; background:none; border:none; color:var(--text-secondary); font-size:13px; cursor:pointer; padding:8px 12px; border-radius:var(--radius-full); flex-shrink:0; }
+  .recipient-back:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); color:var(--text); }
+  .recipient-doc-meta{ display:flex; flex-direction:column; min-width:0; }
+  .recipient-doc-title{ font-size:13px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .recipient-spacer{ flex:1 1 auto; }
+  .recipient-person{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); flex-shrink:0; }
+  .recipient-tabswitch{ display:flex; gap:8px; padding:14px 24px 0; flex-wrap:wrap; background:var(--surface-container); flex-shrink:0; }
+  .recipient-tabswitch button{ border:1px solid var(--border); background:var(--surface); color:var(--text-secondary); border-radius:var(--radius-full); padding:8px 16px; font-size:13px; cursor:pointer; }
+  .recipient-tabswitch button:hover{ background:color-mix(in srgb, var(--text) 5%, transparent); }
+  .recipient-tabswitch button.active{ background:var(--primary-soft); color:var(--on-primary-soft); border-color:transparent; font-weight:500; }
+  .recipient-noaccess{ padding:80px 24px; text-align:center; color:var(--text-secondary); font-size:14px; }
 
   /* ===== Icon button ===== */
   .icon-btn{
@@ -343,18 +346,10 @@
     .page{ padding:32px 24px; }
     .doc-title{ max-width:130px; }
     .upgrade-btn{ display:none; }
-    .proto-hint{ display:none; }
   }
 </style>
 
-<div class="app-shell">
-  <div class="proto-bar">
-    <span class="proto-chip">Prototype</span>
-    <label for="previewSelect">Viewing as</label>
-    <select id="previewSelect"></select>
-    <span class="proto-hint">Simulates what each person sees, based on the sharing grants below — not part of the real Docs UI.</span>
-  </div>
-
+<div class="app-shell" id="ownerView">
   <div class="app" id="app">
     <header class="topbar">
       <div class="tb-row1">
@@ -482,6 +477,21 @@
       <main class="canvas" id="canvas">
         <div class="page-scale" id="pageScale"><article class="page" id="page"></article></div>
       </main>
+    </div>
+  </div>
+</div>
+
+<div id="recipientView" hidden>
+  <div class="recipient-shell">
+    <header class="recipient-topbar" id="recipientHeader"></header>
+    <div class="recipient-tabswitch" id="recipientTabSwitch" style="display:none;"></div>
+    <div id="recipientCanvasWrap">
+      <main class="canvas">
+        <article class="page" id="recipientPage"></article>
+      </main>
+    </div>
+    <div class="recipient-noaccess" id="recipientNoAccess" hidden>
+      This person doesn't currently have access to any tab in this document.
     </div>
   </div>
 </div>
@@ -616,8 +626,7 @@
     zoomSelect: document.getElementById('zoomSelect'),
     toolbar: document.getElementById('toolbar'),
     toolbarCollapseBtn: document.getElementById('toolbarCollapseBtn'),
-    collapseIcon: document.getElementById('collapseIcon'),
-    previewSelect: document.getElementById('previewSelect')
+    collapseIcon: document.getElementById('collapseIcon')
   };
 
   /* ---------- Tab hierarchy helpers ---------- */
@@ -672,49 +681,11 @@
     if(tabGrant) return {role:tabGrant.role, via:'tab'};
     return null;
   }
-  function effectiveAccess(tabId){
-    if(!state.previewAs) return {role:'Owner', via:null};
-    return accessFor(state.previewAs, tabId) || {role:null, via:null};
-  }
-  function isGuestView(){ return !!state.previewAs; }
-
-  function renderPreviewSelect(){
-    const people = personsList();
-    el.previewSelect.innerHTML = [
-      `<option value="">${escapeHtml(OWNER.name)} (Owner)</option>`,
-      ...people.map(p=>`<option value="${escapeAttr(p.email)}">${escapeHtml(p.name)}${p.email==='__public__' ? '' : ' — '+escapeHtml(p.email)}</option>`)
-    ].join('');
-    el.previewSelect.value = state.previewAs || '';
-  }
-
-  function applyPreview(email){
-    state.previewAs = email || null;
-    if(state.previewAs){
-      const vis = visibleTabsFor(state.previewAs);
-      if(!vis.includes(state.activeTabId)) state.activeTabId = vis[0] || state.tabs[0].id;
-    }
-    el.shareDocBtn.disabled = isGuestView();
-    const split = el.shareDocBtn.closest('.split-btn');
-    split.style.opacity = isGuestView() ? .5 : 1;
-    split.style.pointerEvents = isGuestView() ? 'none' : 'auto';
-    closeTabMenu();
-    renderTabs();
-    renderPage();
-  }
-
-  /* ---------- Rail ---------- */
+  /* ---------- Rail (owner always sees everything) ---------- */
   function renderTabs(){
-    const guest = isGuestView();
-    const visibleIds = guest ? new Set(visibleTabsFor(state.previewAs)) : null;
-    const tabsToRender = guest ? state.tabs.filter(t=>visibleIds.has(t.id)) : state.tabs;
-
-    el.addTabBtn.style.display = guest ? 'none' : 'flex';
-
-    el.tabList.innerHTML = tabsToRender.map(tab=>{
+    el.tabList.innerHTML = state.tabs.map(tab=>{
       const active = tab.id === state.activeTabId;
-      const showShareBadge = !guest && hasTabGrantsOrLink(tab.id);
-      const showKebab = !guest;
-      const showAsSubtab = tab.parentId && (!guest || visibleIds.has(tab.parentId));
+      const showShareBadge = hasTabGrantsOrLink(tab.id);
       let nameHtml;
       if(tab.renaming){
         nameHtml = `<input class="tab-name-input" data-rename="${tab.id}" value="${escapeAttr(tab.name)}" />`;
@@ -723,11 +694,11 @@
       }
       const leading = tab.emoji ? `<span class="tab-emoji">${tab.emoji}</span>` : `<span class="tab-dot" style="background:${tab.accent}"></span>`;
       return `
-      <li class="tab-row ${active?'active':''} ${showAsSubtab?'is-subtab':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
+      <li class="tab-row ${active?'active':''} ${tab.parentId?'is-subtab':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
         ${leading}
         ${nameHtml}
         ${showShareBadge ? `<span class="tab-badge" title="Shared with people outside the document">${icon('link',17)}</span>` : ''}
-        ${showKebab ? `<button class="icon-btn sm tab-kebab" data-kebab="${tab.id}" aria-label="Tab options">${icon('more_vert',18)}</button>` : ''}
+        <button class="icon-btn sm tab-kebab" data-kebab="${tab.id}" aria-label="Tab options">${icon('more_vert',18)}</button>
       </li>`;
     }).join('');
 
@@ -840,21 +811,18 @@
         </div>
       </div>`).join('') || `<p class="comment-empty">No comments yet on this tab.</p>`;
     const addBox = canComment
-      ? `<div class="comment-add"><input type="text" id="commentInput" placeholder="Comment on this tab…" /><button class="btn btn-tonal" id="commentSendBtn">Comment</button></div>`
-      : `<p class="comment-empty">${state.previewAs ? "Viewers can't comment on this tab." : ''}</p>`;
+      ? `<div class="comment-add"><input type="text" class="comment-input" placeholder="Comment on this tab…" /><button class="btn btn-tonal comment-send-btn">Comment</button></div>`
+      : `<p class="comment-empty">Viewers can't comment on this tab.</p>`;
     return `<div class="comments-section"><div class="comments-head">${icon('chat_bubble',16)} Comments</div>${list}${addBox}</div>`;
   }
 
-  function renderPage(){
-    const tab = getTab(state.activeTabId);
-    if(!tab){ el.page.innerHTML=''; return; }
+  function buildTabContentHtml(tab, access, mode){
     const c = tab.content;
-    const access = effectiveAccess(tab.id);
     const canEdit = access.role === 'Owner' || access.role === 'Editor';
     const canComment = access.role === 'Owner' || access.role === 'Editor' || access.role === 'Commenter';
 
     let noteHtml = '';
-    if(state.previewAs){
+    if(mode === 'recipient'){
       const viaText = access.via==='document' ? 'the entire document'
         : access.via==='document link' ? 'a public link to the entire document'
         : access.via==='tab link' ? 'a public link to this tab'
@@ -884,7 +852,7 @@
       return '';
     }).join('');
 
-    el.page.innerHTML = `
+    return `
       <div class="page-top-row">
         <div class="doc-kicker">${c.kicker}</div>
         ${roleBadge(access.role)}
@@ -892,26 +860,36 @@
       <h2>${escapeHtml(c.title)}</h2>
       <div style="height:14px"></div>
       ${noteHtml}
-      <div class="doc-body" id="docBody" contenteditable="${canEdit}" spellcheck="false">${bodyHtml}</div>
+      <div class="doc-body" contenteditable="${canEdit}" spellcheck="false">${bodyHtml}</div>
       ${renderComments(tab, canComment)}
     `;
+  }
 
-    document.getElementById('docBody').addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
-    const sendBtn = document.getElementById('commentSendBtn');
+  function wireTabContentEvents(container, tab, access, rerender){
+    container.querySelector('.doc-body').addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
+    const sendBtn = container.querySelector('.comment-send-btn');
     if(sendBtn){
       const doSend = ()=>{
-        const input = document.getElementById('commentInput');
+        const input = container.querySelector('.comment-input');
         const text = input.value.trim();
         if(!text) return;
-        const author = state.previewAs ? (personsList().find(p=>p.email===state.previewAs)||{}).name || 'Guest' : OWNER.name;
+        const author = access.role === 'Owner' ? OWNER.name : (personsList().find(p=>p.email===state.previewAs)||{}).name || 'Guest';
         tab.comments = tab.comments || [];
         tab.comments.push({author, text, time:'Just now'});
         input.value = '';
-        renderPage();
+        rerender();
       };
       sendBtn.onclick = doSend;
-      document.getElementById('commentInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
+      container.querySelector('.comment-input').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
     }
+  }
+
+  function renderPage(){
+    const tab = getTab(state.activeTabId);
+    if(!tab){ el.page.innerHTML=''; return; }
+    const access = {role:'Owner', via:null};
+    el.page.innerHTML = buildTabContentHtml(tab, access, 'owner');
+    wireTabContentEvents(el.page, tab, access, renderPage);
   }
 
   function selectTab(id, opts){
@@ -924,6 +902,97 @@
     renderPage();
     if(window.innerWidth <= 820 && !opts.keepRailOpen){
       el.rail.classList.remove('rail-open');
+    }
+  }
+
+  /* ---------- Recipient page: a separate workflow for someone who opened a shared-tab link ---------- */
+  function renderRecipientPage(){
+    const tab = getTab(state.recipientActiveTabId);
+    if(!tab) return;
+    const access = accessFor(state.previewAs, tab.id) || {role:null, via:null};
+    const container = document.getElementById('recipientPage');
+    container.innerHTML = buildTabContentHtml(tab, access, 'recipient');
+    wireTabContentEvents(container, tab, access, renderRecipientPage);
+  }
+
+  function renderRecipientHeader(email){
+    const person = email === '__public__'
+      ? {name:'Public link visitor', email:''}
+      : (personsList().find(p=>p.email===email) || {name: deriveName(email), email});
+    const header = document.getElementById('recipientHeader');
+    header.innerHTML = `
+      <button class="recipient-back" id="recipientBackBtn">${icon('arrow_back',18)} Back to document</button>
+      <span class="recipient-badge">Prototype preview</span>
+      <div class="recipient-doc-meta"><span class="recipient-doc-title">${escapeHtml(DOC_TITLE)}</span></div>
+      <div class="recipient-spacer"></div>
+      <div class="recipient-person">
+        <div class="avatar" style="background:${person.email?colorFor(person.email):'var(--text-tertiary)'}">${person.email?initials(person.name):'?'}</div>
+        <span>${escapeHtml(person.name)}</span>
+      </div>
+    `;
+    document.getElementById('recipientBackBtn').onclick = ()=>{ location.hash = ''; applyRoute(); };
+  }
+
+  function renderRecipientTabSwitch(email){
+    const vis = visibleTabsFor(email);
+    const container = document.getElementById('recipientTabSwitch');
+    if(vis.length <= 1){ container.innerHTML = ''; container.style.display = 'none'; return; }
+    container.style.display = 'flex';
+    container.innerHTML = vis.map(id=>{
+      const t = getTab(id);
+      const active = id === state.recipientActiveTabId;
+      return `<button class="${active?'active':''}" data-recipient-tab="${id}">${escapeHtml(t.name)}</button>`;
+    }).join('');
+    container.querySelectorAll('[data-recipient-tab]').forEach(btn=>{
+      btn.onclick = ()=>{
+        state.recipientActiveTabId = btn.dataset.recipientTab;
+        renderRecipientTabSwitch(email);
+        renderRecipientPage();
+      };
+    });
+  }
+
+  function showOwnerView(){
+    document.getElementById('ownerView').hidden = false;
+    document.getElementById('recipientView').hidden = true;
+    state.previewAs = null;
+  }
+
+  function showRecipientView(email, preferredTab){
+    document.getElementById('ownerView').hidden = true;
+    document.getElementById('recipientView').hidden = false;
+    state.previewAs = email;
+    const vis = visibleTabsFor(email);
+    const noAccessEl = document.getElementById('recipientNoAccess');
+    const canvasEl = document.getElementById('recipientCanvasWrap');
+    const switchEl = document.getElementById('recipientTabSwitch');
+    renderRecipientHeader(email);
+    if(!vis.length){
+      noAccessEl.hidden = false;
+      canvasEl.hidden = true;
+      switchEl.style.display = 'none';
+      return;
+    }
+    noAccessEl.hidden = true;
+    canvasEl.hidden = false;
+    if(preferredTab && vis.includes(preferredTab)) state.recipientActiveTabId = preferredTab;
+    else if(!state.recipientActiveTabId || !vis.includes(state.recipientActiveTabId)) state.recipientActiveTabId = vis[0];
+    renderRecipientTabSwitch(email);
+    renderRecipientPage();
+  }
+
+  function goToRecipientView(email, preferredTab){
+    location.hash = 'recipient/' + encodeURIComponent(email) + (preferredTab ? '/' + encodeURIComponent(preferredTab) : '');
+    applyRoute();
+  }
+
+  function applyRoute(){
+    const hash = location.hash.replace(/^#\/?/, '');
+    if(hash.startsWith('recipient/')){
+      const parts = hash.slice('recipient/'.length).split('/').map(decodeURIComponent);
+      showRecipientView(parts[0], parts[1]);
+    } else {
+      showOwnerView();
     }
   }
 
@@ -989,6 +1058,8 @@
         <span class="role-static">Owner</span>
       </div>`;
 
+    const previewTabAttr = scope!=='document' ? ` data-preview-tab="${scope}"` : '';
+
     const inheritedHtml = inherited.map(g=>`
       <div class="person-row">
         <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
@@ -997,6 +1068,7 @@
           <div class="person-email">${escapeHtml(g.email)}</div>
         </div>
         <span class="role-static">${g.role} · Entire document</span>
+        <button class="icon-btn sm" data-preview="${g.email}"${previewTabAttr} aria-label="Preview ${escapeAttr(g.name)}'s view">${icon('visibility',18)}</button>
       </div>`).join('');
 
     const grantsHtml = grants.map(g=>`
@@ -1011,6 +1083,7 @@
           <option ${g.role==='Commenter'?'selected':''}>Commenter</option>
           <option ${g.role==='Editor'?'selected':''}>Editor</option>
         </select>
+        <button class="icon-btn sm" data-preview="${g.email}"${previewTabAttr} aria-label="Preview ${escapeAttr(g.name)}'s view">${icon('visibility',18)}</button>
         <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
       </div>`).join('');
 
@@ -1060,6 +1133,7 @@
             <option ${ga.role==='Commenter'?'selected':''}>Commenter</option>
             <option ${ga.role==='Editor'?'selected':''}>Editor</option>
           </select>
+          ${linkOn ? `<button class="icon-btn sm" data-preview="__public__"${previewTabAttr} aria-label="Preview public link view">${icon('visibility',18)}</button>` : ''}
         </div>
       </div>
       <div class="modal-foot">
@@ -1094,13 +1168,20 @@
         state.grants = state.grants.filter(g=>g.id!==btn.dataset.removeGrant);
         renderShareModal(scope);
         renderTabs();
-        renderPreviewSelect();
       };
     });
     el.modal.querySelectorAll('[data-grant-id]').forEach(sel=>{
       sel.onchange = ()=>{
         const g = state.grants.find(g=>g.id===sel.dataset.grantId);
         if(g){ g.role = sel.value; showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scope)}".`); }
+      };
+    });
+    el.modal.querySelectorAll('[data-preview]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const email = btn.dataset.preview;
+        const preferredTab = btn.dataset.previewTab;
+        closeModal();
+        goToRecipientView(email, preferredTab);
       };
     });
   }
@@ -1120,7 +1201,6 @@
     input.value = '';
     renderShareModal(scope);
     renderTabs();
-    renderPreviewSelect();
     showToast(`${name} was given access to "${scopeLabel(scope)}".`);
   }
 
@@ -1303,7 +1383,6 @@
   });
 
   el.tabList.addEventListener('dblclick', (e)=>{
-    if(isGuestView()) return;
     const row = e.target.closest('.tab-row');
     if(row) startRename(row.dataset.tab);
   });
@@ -1366,12 +1445,12 @@
   el.starBtn.addEventListener('click', toggleStar);
   el.zoomSelect.addEventListener('change', applyZoom);
   el.toolbarCollapseBtn.addEventListener('click', toggleToolbar);
-  el.previewSelect.addEventListener('change', (e)=> applyPreview(e.target.value));
+  window.addEventListener('hashchange', applyRoute);
 
   /* ---------- Init ---------- */
   state.tabs.forEach(t=> ensureGeneralAccessEntry(t.id));
-  renderPreviewSelect();
   renderTabs();
   renderPage();
+  applyRoute();
 })();
 </script>
