@@ -1,0 +1,1024 @@
+<title>Tab-Level Sharing</title>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+
+<style>
+  /* ===== Tokens: Google Workspace blue ===== */
+  :root{
+    --primary:#1a73e8;
+    --on-primary:#ffffff;
+    --primary-hover:#1765cc;
+    --primary-soft:#e8f0fe;
+    --on-primary-soft:#1a73e8;
+    --surface:#ffffff;
+    --surface-container:#f8f9fa;
+    --surface-container-high:#ffffff;
+    --border:#dadce0;
+    --border-strong:#c4c7cc;
+    --text:#202124;
+    --text-secondary:#5f6368;
+    --text-tertiary:#80868b;
+    --warn:#b06000;
+    --warn-soft:#fef7e0;
+    --error:#c5221f;
+    --error-soft:#fce8e6;
+    --scrim:rgba(32,33,36,.55);
+    --shadow-1:0 1px 2px rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
+    --shadow-2:0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    --shadow-3:0 4px 8px 3px rgba(60,64,67,.15), 0 1px 3px rgba(60,64,67,.3);
+    --paper-shadow:0 1px 3px rgba(60,64,67,.15), 0 4px 12px rgba(60,64,67,.1);
+    --radius-xs:6px; --radius-sm:8px; --radius-md:12px; --radius-lg:20px; --radius-full:999px;
+    --font-ui:'Roboto',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+    --font-doc:Arial,'Helvetica Neue',Helvetica,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --primary:#8ab4f8;
+      --on-primary:#062e6f;
+      --primary-hover:#aecbfa;
+      --primary-soft:#28323f;
+      --on-primary-soft:#8ab4f8;
+      --surface:#202124;
+      --surface-container:#292a2d;
+      --surface-container-high:#2d2e30;
+      --border:#3c4043;
+      --border-strong:#5f6368;
+      --text:#e8eaed;
+      --text-secondary:#9aa0a6;
+      --text-tertiary:#80868b;
+      --warn:#fdd663;
+      --warn-soft:#3a341f;
+      --error:#f28b82;
+      --error-soft:#3a2725;
+      --scrim:rgba(0,0,0,.6);
+      --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
+      --shadow-2:0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+      --shadow-3:0 4px 10px 3px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.5);
+      --paper-shadow:0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --primary:#8ab4f8; --on-primary:#062e6f; --primary-hover:#aecbfa; --primary-soft:#28323f; --on-primary-soft:#8ab4f8;
+    --surface:#202124; --surface-container:#292a2d; --surface-container-high:#2d2e30;
+    --border:#3c4043; --border-strong:#5f6368;
+    --text:#e8eaed; --text-secondary:#9aa0a6; --text-tertiary:#80868b;
+    --warn:#fdd663; --warn-soft:#3a341f; --error:#f28b82; --error-soft:#3a2725;
+    --scrim:rgba(0,0,0,.6);
+    --shadow-1:0 1px 2px rgba(0,0,0,.5), 0 1px 3px 1px rgba(0,0,0,.3);
+    --shadow-2:0 1px 3px rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+    --shadow-3:0 4px 10px 3px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.5);
+    --paper-shadow:0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.35);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; background:var(--surface); color:var(--text); font-family:var(--font-ui);
+    font-size:14px; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  button, input, select{ font-family:inherit; font-size:inherit; color:inherit; }
+  button{ -webkit-tap-highlight-color:transparent; }
+  :focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:4px; }
+  h1,h2,h3{ text-wrap:balance; }
+
+  .material-symbols-outlined{
+    font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;
+    font-size:20px; line-height:1; display:inline-block; user-select:none; flex-shrink:0;
+  }
+  .filled{ font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 20; }
+
+  .app{ display:flex; flex-direction:column; height:100vh; min-height:600px; }
+
+  /* ===== Icon button ===== */
+  .icon-btn{
+    position:relative; width:40px; height:40px; border-radius:50%; border:none; background:none;
+    color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+  .icon-btn:hover{ background:color-mix(in srgb, currentColor 8%, transparent); }
+  .icon-btn:active{ background:color-mix(in srgb, currentColor 12%, transparent); }
+  .icon-btn.sm{ width:34px; height:34px; }
+  .icon-btn.on{ color:var(--primary); background:var(--primary-soft); }
+  .icon-btn:disabled{ opacity:.38; cursor:not-allowed; }
+  .icon-btn:disabled:hover{ background:none; }
+
+  /* ===== Buttons ===== */
+  .btn{
+    position:relative; font-family:inherit; font-size:14px; font-weight:500; letter-spacing:.01em;
+    height:40px; padding:0 24px; border-radius:var(--radius-full); border:1px solid transparent; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  .btn .material-symbols-outlined{ font-size:18px; }
+  .btn:disabled{ opacity:.38; cursor:not-allowed; }
+  .btn-filled{ background:var(--primary); color:var(--on-primary); }
+  .btn-filled:hover:not(:disabled){ background:var(--primary-hover); box-shadow:var(--shadow-1); }
+  .btn-tonal{ background:var(--primary-soft); color:var(--on-primary-soft); }
+  .btn-tonal:hover:not(:disabled){ background:color-mix(in srgb, var(--primary-soft) 85%, var(--primary) 15%); }
+  .btn-outlined{ background:transparent; color:var(--text); border-color:var(--border-strong); padding:0 23px; }
+  .btn-outlined:hover:not(:disabled){ background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .btn-text{ background:none; color:var(--primary); padding:0 12px; height:36px; }
+  .btn-text:hover:not(:disabled){ background:color-mix(in srgb, var(--primary) 8%, transparent); }
+
+  .split-btn{ display:flex; align-items:stretch; }
+  .split-btn .btn-filled{ border-radius:var(--radius-full) 0 0 var(--radius-full); padding:0 16px 0 20px; }
+  .split-btn .split-chev{
+    border-radius:0 var(--radius-full) var(--radius-full) 0; background:var(--primary); color:var(--on-primary);
+    width:34px; height:40px; border:none; border-left:1px solid color-mix(in srgb, var(--on-primary) 30%, transparent);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .split-btn .split-chev:hover{ background:var(--primary-hover); }
+  .split-btn .split-chev .material-symbols-outlined{ font-size:18px; }
+
+  /* ===== Top chrome ===== */
+  .topbar{ background:var(--surface); flex-shrink:0; }
+  .tb-row1{ display:flex; align-items:center; gap:2px; padding:8px 12px 2px; }
+  .doc-icon{ width:32px; height:32px; border-radius:var(--radius-sm); background:var(--primary-soft); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-right:8px; }
+  .doc-icon .material-symbols-outlined{ font-size:19px; }
+  .doc-meta{ display:flex; flex-direction:column; min-width:0; margin-right:4px; }
+  .doc-title{
+    font-size:18px; font-weight:400; border:1px solid transparent; background:none; color:var(--text);
+    padding:3px 8px; border-radius:var(--radius-xs); max-width:320px;
+  }
+  .doc-title:hover:not(:disabled){ background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .doc-title:disabled{ color:var(--text); opacity:1; }
+  .tb1-spacer{ flex:1 1 auto; }
+  .md-select{
+    appearance:none; -webkit-appearance:none;
+    border:1px solid var(--border); background:var(--surface); color:var(--text);
+    border-radius:var(--radius-xs); padding:7px 30px 7px 12px; cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'><path d='M7 10l5 5 5-5z' fill='%235f6368'/></svg>");
+    background-repeat:no-repeat; background-position:right 4px center;
+  }
+  .avatar{
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:600; color:#fff; flex-shrink:0;
+  }
+  .tb1-actions{ display:flex; align-items:center; gap:2px; margin-left:6px; }
+  .upgrade-btn{ margin-left:10px; height:36px; padding:0 16px; }
+  .account-avatar{ margin-left:14px; width:32px; height:32px; background:var(--primary); }
+
+  .menu-row{ display:flex; gap:2px; padding:2px 20px 4px 52px; }
+  .menu-btn2{ background:none; border:none; color:var(--text); font-size:13px; padding:6px 10px; border-radius:var(--radius-xs); cursor:pointer; }
+  .menu-btn2:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); }
+
+  .toolbar-wrap{ border-bottom:1px solid var(--border); }
+  .toolbar{ display:flex; align-items:center; gap:2px; padding:4px 12px; overflow-x:auto; scrollbar-width:thin; }
+  .toolbar.collapsed{ display:none; }
+  .tb-search{
+    display:flex; align-items:center; gap:8px; color:var(--text-secondary); background:var(--surface-container);
+    border-radius:var(--radius-full); padding:6px 14px 6px 10px; font-size:12.5px; flex-shrink:0; cursor:pointer; border:none;
+  }
+  .tb-search .material-symbols-outlined{ font-size:18px; }
+  .tb-div{ width:1px; height:24px; background:var(--border); margin:0 6px; flex-shrink:0; }
+  .zoom-select{ font-size:12.5px; padding:6px 26px 6px 10px; }
+  .style-select{ font-size:12.5px; padding:6px 26px 6px 10px; max-width:110px; }
+  .font-select{ font-size:12.5px; padding:6px 26px 6px 10px; max-width:100px; }
+  .size-stepper{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
+  .size-field{ width:32px; text-align:center; border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px 2px; background:var(--surface); }
+  .tb-right{ margin-left:auto; display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .editing-select{ font-size:12.5px; padding:7px 30px 7px 14px; }
+
+  /* ===== Body layout ===== */
+  .body{ display:flex; flex:1 1 auto; min-height:0; position:relative; }
+  .rail{
+    width:280px; flex-shrink:0; background:var(--surface-container);
+    border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0;
+  }
+  .rail-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px 8px; color:var(--text-secondary); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+
+  .tab-list{ list-style:none; margin:0; padding:0 12px; overflow-y:auto; flex:1 1 auto; display:flex; flex-direction:column; gap:2px; }
+  .tab-row{ position:relative; display:flex; align-items:center; gap:10px; padding:10px 8px 10px 14px; border-radius:var(--radius-sm); cursor:pointer; }
+  .tab-row:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .tab-row.active{ background:var(--primary-soft); }
+  .tab-row.active .tab-name{ color:var(--primary); font-weight:500; }
+  .tab-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .tab-name{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; color:var(--text); }
+  .tab-name-input{ flex:1 1 auto; min-width:0; border:1px solid var(--primary); border-radius:6px; padding:3px 8px; background:var(--surface); color:var(--text); font-size:13.5px; }
+  .tab-badge{ flex-shrink:0; display:flex; align-items:center; color:var(--primary); }
+  .tab-badge .material-symbols-outlined{ font-size:17px; }
+  .tab-kebab{ flex-shrink:0; opacity:0; }
+  .tab-row:hover .tab-kebab, .tab-row.menu-open .tab-kebab{ opacity:1; }
+
+  .add-tab-btn{
+    margin:10px 16px 16px; background:none; border:1px dashed var(--border-strong); color:var(--text-secondary);
+    border-radius:var(--radius-full); padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:13px;
+  }
+  .add-tab-btn:hover:not(:disabled){ background:color-mix(in srgb, var(--text) 5%, transparent); color:var(--text); }
+
+  /* menu popover */
+  .popover{ position:absolute; z-index:40; min-width:200px; background:var(--surface-container-high); border-radius:var(--radius-sm); box-shadow:var(--shadow-2); padding:8px; }
+  .popover-item{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:10px 12px; border-radius:6px; background:none; border:none; cursor:pointer; font-size:13.5px; color:var(--text); }
+  .popover-item:hover{ background:color-mix(in srgb, var(--text) 8%, transparent); }
+  .popover-item.danger{ color:var(--error); }
+  .popover-item .material-symbols-outlined{ font-size:19px; color:var(--text-secondary); }
+  .popover-item.danger .material-symbols-outlined{ color:var(--error); }
+  .popover-divider{ height:1px; background:var(--border); margin:6px 4px; }
+
+  /* ===== Canvas / paper ===== */
+  .canvas{ flex:1 1 auto; overflow-y:auto; padding:40px 24px 100px; display:flex; justify-content:center; min-width:0; }
+  .page-scale{ transform-origin:top center; }
+  .page{ width:680px; max-width:100%; background:var(--surface); box-shadow:var(--paper-shadow); border-radius:2px; padding:56px 64px; font-family:var(--font-doc); color:var(--text); line-height:1.65; }
+  .page h2{ font-size:23px; margin:0 0 4px; font-weight:700; }
+  .page .doc-kicker{ font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-secondary); font-family:var(--font-ui); margin-bottom:6px; font-weight:600; }
+  .page p{ margin:0 0 14px; font-size:14.5px; max-width:65ch; }
+  .page ul{ margin:0 0 14px; padding-left:22px; }
+  .page li{ margin-bottom:6px; font-size:14.5px; }
+  .page .access-note{ display:flex; gap:10px; align-items:flex-start; font-family:var(--font-ui); font-size:12.5px; border-radius:var(--radius-md); padding:12px 14px; margin:0 0 22px; background:var(--primary-soft); color:var(--on-primary-soft); }
+  .page .access-note .material-symbols-outlined{ font-size:19px; margin-top:1px; }
+  .table-wrap{ overflow-x:auto; margin:0 0 16px; }
+  table.budget{ border-collapse:collapse; width:100%; font-size:13.5px; font-family:var(--font-ui); min-width:420px; }
+  table.budget th, table.budget td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--border); }
+  table.budget td.num, table.budget th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  table.budget th{ color:var(--text-secondary); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  table.budget tr:last-child td{ font-weight:700; border-bottom:none; }
+
+  /* ===== Modal ===== */
+  .overlay{ position:fixed; inset:0; background:var(--scrim); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .overlay.open{ display:flex; }
+  .modal{ background:var(--surface-container-high); border-radius:var(--radius-lg); box-shadow:var(--shadow-3); width:100%; max-width:480px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal-head{ padding:24px 24px 8px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .modal-head h3{ margin:0; font-size:20px; font-weight:500; color:var(--text); }
+  .modal-head p{ margin:8px 0 0; font-size:13px; color:var(--text-secondary); line-height:1.5; max-width:38ch; }
+  .modal-close{ margin-top:-4px; }
+  .modal-body{ padding:16px 24px; overflow-y:auto; }
+  .field-row{ display:flex; gap:8px; margin-bottom:16px; }
+  .text-field{ position:relative; flex:1 1 auto; min-width:0; }
+  .text-field input{ width:100%; border:1px solid var(--border); border-radius:var(--radius-xs); padding:14px 14px 8px; background:transparent; color:var(--text); min-width:0; }
+  .text-field label{ position:absolute; left:11px; top:-8px; background:var(--surface-container-high); padding:0 5px; font-size:11px; color:var(--text-secondary); }
+  .text-field input:focus{ border:2px solid var(--primary); padding:13px 13px 7px; }
+  .text-field input:focus + label{ color:var(--primary); }
+  .people-list{ display:flex; flex-direction:column; gap:2px; margin-bottom:6px; }
+  .person-row{ display:flex; align-items:center; gap:10px; padding:7px 2px; }
+  .person-info{ flex:1 1 auto; min-width:0; }
+  .person-name{ font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .person-email{ font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .role-select{ font-size:12.5px; padding:6px 26px 6px 10px; }
+  .person-remove{ color:var(--text-secondary); }
+  .divider{ height:1px; background:var(--border); margin:16px 0; }
+  .access-block{ display:flex; align-items:center; gap:14px; }
+  .access-icon{ width:40px; height:40px; border-radius:50%; background:var(--surface-container); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-secondary); }
+  .access-icon.on{ background:var(--primary-soft); color:var(--primary); }
+  .access-copy{ flex:1 1 auto; min-width:0; }
+  .access-title{ font-size:13.5px; font-weight:500; margin-bottom:2px; }
+  .access-sub{ font-size:12px; color:var(--text-secondary); line-height:1.4; }
+  .access-select{ font-size:12.5px; padding:8px 30px 8px 12px; flex-shrink:0; }
+  .scope-note{ display:flex; gap:10px; align-items:flex-start; background:var(--primary-soft); color:var(--on-primary-soft); border-radius:var(--radius-md); padding:12px 14px; font-size:12.5px; line-height:1.5; margin-bottom:18px; }
+  .scope-note.warn{ background:var(--warn-soft); color:var(--warn); }
+  .scope-note .material-symbols-outlined{ font-size:19px; margin-top:1px; }
+  .modal-foot{ padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+  /* ===== Snackbar ===== */
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translate(-50%, 20px);
+    background:#323236; color:#e8eaed; padding:14px 16px 14px 24px; border-radius:var(--radius-xs); font-size:13.5px;
+    display:flex; align-items:center; gap:20px; box-shadow:var(--shadow-3);
+    opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; z-index:200; max-width:90vw;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
+  .toast button{ background:none; border:none; color:#8ab4f8; font-weight:600; cursor:pointer; white-space:nowrap; padding:4px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .btn, .toast, .overlay, .modal{ transition:none !important; }
+  }
+
+  /* ===== Responsive ===== */
+  .menu-btn{ display:none; }
+  @media (max-width: 820px){
+    .menu-btn{ display:flex; }
+    .menu-row{ display:none; }
+    .rail{ position:absolute; inset:0 auto 0 0; z-index:30; transform:translateX(-100%); transition:transform .2s ease; box-shadow:var(--shadow-3); }
+    .rail.rail-open{ transform:translateX(0); }
+    .page{ padding:32px 24px; }
+    .doc-title{ max-width:130px; }
+    .upgrade-btn{ display:none; }
+  }
+</style>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="tb-row1">
+      <button class="icon-btn menu-btn" id="railToggle" aria-label="Toggle tabs panel">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="doc-icon"><span class="material-symbols-outlined">description</span></div>
+      <div class="doc-meta">
+        <input class="doc-title" id="docTitle" value="Q3 Product Launch Plan" disabled />
+      </div>
+      <button class="icon-btn sm" id="starBtn" aria-label="Star this document">
+        <span class="material-symbols-outlined" id="starIcon">star</span>
+      </button>
+      <button class="icon-btn sm" aria-label="Move to folder"><span class="material-symbols-outlined">folder_open</span></button>
+      <button class="icon-btn sm" aria-label="Saved to Drive"><span class="material-symbols-outlined">cloud_done</span></button>
+
+      <div class="tb1-spacer"></div>
+
+      <div class="tb1-actions">
+        <button class="icon-btn" aria-label="Version history"><span class="material-symbols-outlined">history</span></button>
+        <button class="icon-btn" aria-label="Comment history"><span class="material-symbols-outlined">chat_bubble</span></button>
+        <button class="icon-btn" aria-label="Start video call"><span class="material-symbols-outlined">videocam</span></button>
+      </div>
+
+      <div class="split-btn" style="margin-left:10px;">
+        <button class="btn btn-filled" id="shareDocBtn">
+          <span class="material-symbols-outlined">group_add</span> Share
+        </button>
+        <button class="split-chev" aria-label="Share options"><span class="material-symbols-outlined">arrow_drop_down</span></button>
+      </div>
+
+      <button class="btn btn-outlined upgrade-btn">Upgrade</button>
+      <button class="icon-btn" aria-label="AI assistant"><span class="material-symbols-outlined">auto_awesome</span></button>
+      <div class="avatar account-avatar">JR</div>
+    </div>
+
+    <nav class="menu-row" aria-label="Menu bar">
+      <button class="menu-btn2">File</button>
+      <button class="menu-btn2">Edit</button>
+      <button class="menu-btn2">View</button>
+      <button class="menu-btn2">Insert</button>
+      <button class="menu-btn2">Format</button>
+      <button class="menu-btn2">Tools</button>
+      <button class="menu-btn2">Extensions</button>
+      <button class="menu-btn2">Help</button>
+    </nav>
+
+    <div class="toolbar-wrap">
+      <div class="toolbar" id="toolbar">
+        <button class="tb-search"><span class="material-symbols-outlined">search</span>Menus</button>
+        <div class="tb-div"></div>
+        <button class="icon-btn sm" aria-label="Undo"><span class="material-symbols-outlined">undo</span></button>
+        <button class="icon-btn sm" aria-label="Redo"><span class="material-symbols-outlined">redo</span></button>
+        <button class="icon-btn sm" aria-label="Print"><span class="material-symbols-outlined">print</span></button>
+        <button class="icon-btn sm" aria-label="Spelling and grammar check"><span class="material-symbols-outlined">spellcheck</span></button>
+        <button class="icon-btn sm" aria-label="Paint format"><span class="material-symbols-outlined">format_paint</span></button>
+        <div class="tb-div"></div>
+        <select class="md-select zoom-select" id="zoomSelect" aria-label="Zoom">
+          <option value="0.75">75%</option>
+          <option value="0.9">90%</option>
+          <option value="1" selected>100%</option>
+          <option value="1.25">125%</option>
+          <option value="1.5">150%</option>
+        </select>
+        <div class="tb-div"></div>
+        <select class="md-select style-select" aria-label="Paragraph style">
+          <option>Heading 2</option>
+          <option>Title</option>
+          <option>Subtitle</option>
+          <option>Normal text</option>
+        </select>
+        <select class="md-select font-select" aria-label="Font">
+          <option>Roboto</option>
+          <option>Arial</option>
+          <option>Georgia</option>
+        </select>
+        <div class="size-stepper">
+          <button class="icon-btn sm" aria-label="Decrease font size"><span class="material-symbols-outlined">remove</span></button>
+          <input class="size-field" value="13" aria-label="Font size" />
+          <button class="icon-btn sm" aria-label="Increase font size"><span class="material-symbols-outlined">add</span></button>
+        </div>
+        <div class="tb-div"></div>
+        <button class="icon-btn sm" aria-label="Bold"><span class="material-symbols-outlined">format_bold</span></button>
+        <button class="icon-btn sm" aria-label="Italic"><span class="material-symbols-outlined">format_italic</span></button>
+        <button class="icon-btn sm" aria-label="Underline"><span class="material-symbols-outlined">format_underlined</span></button>
+        <button class="icon-btn sm" aria-label="Text color"><span class="material-symbols-outlined">format_color_text</span></button>
+        <button class="icon-btn sm" aria-label="Highlight color"><span class="material-symbols-outlined">ink_highlighter</span></button>
+        <div class="tb-div"></div>
+        <button class="icon-btn sm" aria-label="Insert link"><span class="material-symbols-outlined">link</span></button>
+        <button class="icon-btn sm" aria-label="Add comment"><span class="material-symbols-outlined">add_comment</span></button>
+        <button class="icon-btn sm" aria-label="Insert image"><span class="material-symbols-outlined">image</span></button>
+        <div class="tb-div"></div>
+        <button class="icon-btn sm" aria-label="Align"><span class="material-symbols-outlined">format_align_left</span></button>
+        <button class="icon-btn sm" aria-label="Line spacing"><span class="material-symbols-outlined">format_line_spacing</span></button>
+        <button class="icon-btn sm" aria-label="Checklist"><span class="material-symbols-outlined">checklist</span></button>
+        <button class="icon-btn sm" aria-label="Bulleted list"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+        <button class="icon-btn sm" aria-label="Numbered list"><span class="material-symbols-outlined">format_list_numbered</span></button>
+        <button class="icon-btn sm" aria-label="Decrease indent"><span class="material-symbols-outlined">format_indent_decrease</span></button>
+        <button class="icon-btn sm" aria-label="Increase indent"><span class="material-symbols-outlined">format_indent_increase</span></button>
+        <button class="icon-btn sm" aria-label="Clear formatting"><span class="material-symbols-outlined">format_clear</span></button>
+        <div class="tb-right">
+          <select class="md-select editing-select" aria-label="Mode">
+            <option>Editing</option>
+            <option>Suggesting</option>
+            <option>Viewing</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:center; padding:1px 0 3px;">
+        <button class="icon-btn sm" id="toolbarCollapseBtn" aria-label="Collapse toolbar" style="width:56px; height:14px; border-radius:0 0 10px 10px;">
+          <span class="material-symbols-outlined" id="collapseIcon" style="font-size:16px;">keyboard_arrow_up</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="body">
+    <nav class="rail" id="rail">
+      <div class="rail-header"><span>Tabs</span></div>
+      <ul class="tab-list" id="tabList"></ul>
+      <button class="add-tab-btn" id="addTabBtn">
+        <span class="material-symbols-outlined" style="font-size:18px;">add</span> Add tab
+      </button>
+    </nav>
+    <main class="canvas" id="canvas">
+      <div class="page-scale" id="pageScale"><article class="page" id="page"></article></div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastAction" style="display:none;"></button></div>
+
+<script>
+(function(){
+  "use strict";
+
+  function icon(name, size){ return `<span class="material-symbols-outlined" style="${size?('font-size:'+size+'px;'):''}">${name}</span>`; }
+  function initials(name){ return name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(); }
+  function colorFor(seed){
+    const palette = ['#1a73e8','#188038','#e37400','#8430ce','#d93025','#12805c'];
+    let h=0; for(const c of seed) h = (h*31 + c.charCodeAt(0)) % 997;
+    return palette[h % palette.length];
+  }
+
+  const DOC_TITLE = "Q3 Product Launch Plan";
+  const OWNER = { name:"Jordan Reyes", email:"jordan@brightpath.io" };
+
+  let state = {
+    activeTabId: "overview",
+    openMenuTabId: null,
+    starred: false,
+    tabs: [
+      {
+        id:"overview", name:"Overview", accent:"#1a73e8",
+        shared:false, sharedWith:[], linkAccess:"restricted",
+        content: {
+          kicker:"Section 1", title:"Overview",
+          body: [
+            {p:"Q3's launch centers on the Atlas workspace redesign shipping to all customers on September 30. This tab tracks goals, ownership, and the cross-team schedule everyone can see."},
+            {ul:["Primary goal: cut new-workspace setup time from 14 minutes to under 5.","Secondary goal: raise week-1 activation from 61% to 75%.","Sponsor: Dana Whitfield (VP Product). Launch lead: Jordan Reyes."]},
+            {p:"Every collaborator on this document can read this tab — it's the shared front door before people jump into the section that's actually theirs."}
+          ]
+        }
+      },
+      {
+        id:"marketing", name:"Marketing Brief", accent:"#8430ce",
+        shared:true,
+        sharedWith:[{name:"Priya Chandra", email:"priya@northwind-agency.com", role:"Commenter"}],
+        linkAccess:"restricted",
+        content:{
+          kicker:"Section 2", title:"Marketing Brief",
+          body:[
+            {p:"Positioning, launch-week creative, and the press embargo date for Northwind, our external agency partner. Northwind only needs this tab — not the roadmap, the budget, or engineering's internal notes."},
+            {ul:["Embargo lifts September 30, 6:00am PT.","Hero message: “Set up a workspace in under five minutes.”","Deliverables due from Northwind: hero video (Sept 20), landing page copy (Sept 12), three social cutdowns (Sept 24)."]},
+            {p:"Comments from Northwind should land directly on this tab. Keep budget figures and internal timeline risk out of anything shared externally."}
+          ]
+        }
+      },
+      {
+        id:"engineering", name:"Engineering Specs", accent:"#12805c",
+        shared:false, sharedWith:[], linkAccess:"restricted",
+        content:{
+          kicker:"Section 3", title:"Engineering Specs",
+          body:[
+            {p:"Migration plan for existing workspaces, feature-flag rollout order, and the rollback plan if activation drops after ship."},
+            {ul:["Flag: workspace-onboarding-v2, ramping 10% → 50% → 100% over 5 days.","Rollback trigger: activation drop >8% vs. control for 2 consecutive days.","Owner: Priyanka Rao (Eng). Backup: Tomas Vidal."]}
+          ]
+        }
+      },
+      {
+        id:"budget", name:"Budget (Confidential)", accent:"#d93025",
+        shared:false, sharedWith:[], linkAccess:"restricted",
+        content:{
+          kicker:"Section 4 · Restricted", title:"Budget (Confidential)",
+          body:[
+            {p:"Full launch spend, including the agency contract value — not for external sharing. This is exactly what tab-level sharing needs to protect if this document ever goes outside the company."},
+            {table:{
+              headers:["Line item","Owner","Amount"],
+              rows:[
+                ["Northwind agency contract","Marketing","$48,000"],
+                ["Paid social & search","Marketing","$22,500"],
+                ["Launch event (SF)","Events","$16,800"],
+                ["Contractor eng support","Engineering","$9,200"],
+                ["Total","","$96,500"]
+              ]
+            }}
+          ]
+        }
+      },
+      {
+        id:"notes", name:"Meeting Notes", accent:"#e37400",
+        shared:false, sharedWith:[], linkAccess:"restricted",
+        content:{
+          kicker:"Section 5", title:"Meeting Notes — Sept 2",
+          body:[
+            {p:"Weekly launch sync. Attendees: Jordan, Dana, Priyanka, Sam."},
+            {ul:["Landing page copy locked pending legal review — due Sept 5.","Northwind asked for one more round on the hero video; new due date Sept 20.","Budget variance from contractor eng support flagged — revisit next sync."]}
+          ]
+        }
+      }
+    ]
+  };
+
+  let deletedStash = null;
+  let deletedTimer = null;
+
+  const el = {
+    tabList: document.getElementById('tabList'),
+    page: document.getElementById('page'),
+    pageScale: document.getElementById('pageScale'),
+    shareDocBtn: document.getElementById('shareDocBtn'),
+    addTabBtn: document.getElementById('addTabBtn'),
+    overlay: document.getElementById('overlay'),
+    modal: document.getElementById('modal'),
+    toast: document.getElementById('toast'),
+    toastMsg: document.getElementById('toastMsg'),
+    toastAction: document.getElementById('toastAction'),
+    rail: document.getElementById('rail'),
+    railToggle: document.getElementById('railToggle'),
+    docTitle: document.getElementById('docTitle'),
+    starBtn: document.getElementById('starBtn'),
+    starIcon: document.getElementById('starIcon'),
+    zoomSelect: document.getElementById('zoomSelect'),
+    toolbar: document.getElementById('toolbar'),
+    toolbarCollapseBtn: document.getElementById('toolbarCollapseBtn'),
+    collapseIcon: document.getElementById('collapseIcon')
+  };
+
+  function getTab(id){ return state.tabs.find(t=>t.id===id); }
+
+  function renderTabs(){
+    el.tabList.innerHTML = state.tabs.map(tab=>{
+      const active = tab.id === state.activeTabId;
+      const showShareBadge = tab.shared;
+      let nameHtml;
+      if(tab.renaming){
+        nameHtml = `<input class="tab-name-input" data-rename="${tab.id}" value="${escapeAttr(tab.name)}" />`;
+      } else {
+        nameHtml = `<span class="tab-name">${escapeHtml(tab.name)}</span>`;
+      }
+      return `
+      <li class="tab-row ${active?'active':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
+        <span class="tab-dot" style="background:${tab.accent}"></span>
+        ${nameHtml}
+        ${showShareBadge ? `<span class="tab-badge" title="Shared with people outside the document">${icon('link',17)}</span>` : ''}
+        <button class="icon-btn sm tab-kebab" data-kebab="${tab.id}" aria-label="Tab options">${icon('more_vert',18)}</button>
+      </li>`;
+    }).join('');
+
+    if(state.openMenuTabId){ renderTabMenu(state.openMenuTabId); }
+  }
+
+  function renderTabMenu(tabId){
+    const row = el.tabList.querySelector(`.tab-row[data-tab="${tabId}"]`);
+    if(!row) return;
+    const existing = document.getElementById('tabPopover');
+    if(existing) existing.remove();
+    const pop = document.createElement('div');
+    pop.className = 'popover';
+    pop.id = 'tabPopover';
+    pop.innerHTML = `
+      <button class="popover-item" data-action="share" data-id="${tabId}">${icon('group',19)} Share this tab…</button>
+      <button class="popover-item" data-action="rename" data-id="${tabId}">${icon('edit',19)} Rename</button>
+      <button class="popover-item" data-action="duplicate" data-id="${tabId}">${icon('file_copy',19)} Duplicate</button>
+      <div class="popover-divider"></div>
+      <button class="popover-item danger" data-action="delete" data-id="${tabId}">${icon('delete',19)} Delete</button>
+    `;
+    document.body.appendChild(pop);
+    const rowRect = row.getBoundingClientRect();
+    pop.style.top = (rowRect.bottom + 4 + window.scrollY) + 'px';
+    pop.style.left = Math.min(rowRect.left + window.scrollX, window.innerWidth - 216) + 'px';
+  }
+
+  function closeTabMenu(){
+    state.openMenuTabId = null;
+    const existing = document.getElementById('tabPopover');
+    if(existing) existing.remove();
+  }
+
+  function renderPage(){
+    const tab = getTab(state.activeTabId);
+    if(!tab){ el.page.innerHTML=''; return; }
+    const c = tab.content;
+    let noteHtml = '';
+    if(tab.shared){
+      const names = tab.sharedWith.map(p=>p.name).join(', ');
+      const who = names ? `with <strong>${escapeHtml(names)}</strong>` : `via a public link`;
+      noteHtml = `<div class="access-note">${icon('link',19)}<span>This tab is shared separately from the document ${who}. They can't see the other tabs.</span></div>`;
+    }
+    const bodyHtml = c.body.map(block=>{
+      if(block.p) return `<p>${block.p}</p>`;
+      if(block.ul) return `<ul>${block.ul.map(li=>`<li>${li}</li>`).join('')}</ul>`;
+      if(block.table){
+        const t = block.table;
+        return `<div class="table-wrap"><table class="budget">
+          <thead><tr>${t.headers.map((h,i)=>`<th class="${i===t.headers.length-1?'num':''}">${h}</th>`).join('')}</tr></thead>
+          <tbody>${t.rows.map(r=>`<tr>${r.map((cell,i)=>`<td class="${i===r.length-1?'num':''}">${cell}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table></div>`;
+      }
+      return '';
+    }).join('');
+
+    el.page.innerHTML = `
+      <div class="doc-kicker">${c.kicker}</div>
+      <h2>${escapeHtml(c.title)}</h2>
+      <div style="height:14px"></div>
+      ${noteHtml}
+      ${bodyHtml}
+    `;
+  }
+
+  function selectTab(id, opts){
+    opts = opts || {};
+    const tab = getTab(id);
+    if(!tab) return;
+    state.activeTabId = id;
+    closeTabMenu();
+    renderTabs();
+    renderPage();
+    if(window.innerWidth <= 820 && !opts.keepRailOpen){
+      el.rail.classList.remove('rail-open');
+    }
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  /* ---------- Toast ---------- */
+  let toastTimer = null;
+  function showToast(msg, actionLabel, actionFn){
+    clearTimeout(toastTimer);
+    el.toastMsg.textContent = msg;
+    if(actionLabel){
+      el.toastAction.style.display = 'inline';
+      el.toastAction.textContent = actionLabel;
+      el.toastAction.onclick = ()=>{ el.toast.classList.remove('show'); if(actionFn) actionFn(); };
+    } else {
+      el.toastAction.style.display = 'none';
+      el.toastAction.onclick = null;
+    }
+    el.toast.classList.add('show');
+    toastTimer = setTimeout(()=> el.toast.classList.remove('show'), 6000);
+  }
+
+  function copyToClipboard(text){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));
+      } else { fallbackCopy(text); }
+    }catch(e){ fallbackCopy(text); }
+  }
+  function fallbackCopy(text){
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }catch(e){}
+  }
+
+  /* ---------- Modal: tab share ---------- */
+  function openTabShareModal(tabId){
+    const tab = getTab(tabId);
+    if(!tab) return;
+    closeTabMenu();
+    renderTabShareModal(tab);
+    el.overlay.classList.add('open');
+  }
+
+  function renderTabShareModal(tab){
+    const peopleHtml = tab.sharedWith.map((p,i)=>{
+      const c = colorFor(p.email);
+      return `
+      <div class="person-row">
+        <div class="avatar" style="background:${c}">${initials(p.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(p.name)}</div>
+          <div class="person-email">${escapeHtml(p.email)}</div>
+        </div>
+        <select class="md-select role-select" data-role-idx="${i}">
+          <option ${p.role==='Viewer'?'selected':''}>Viewer</option>
+          <option ${p.role==='Commenter'?'selected':''}>Commenter</option>
+          <option ${p.role==='Editor'?'selected':''}>Editor</option>
+        </select>
+        <button class="icon-btn sm person-remove" data-remove-idx="${i}" aria-label="Remove">${icon('close',18)}</button>
+      </div>`;
+    }).join('') || `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has been added to this tab yet.</p>`;
+
+    const linkOn = tab.linkAccess === 'anyone';
+    el.modal.innerHTML = `
+      <div class="modal-head">
+        <div>
+          <h3>Share "${escapeHtml(tab.name)}"</h3>
+          <p>People you add here can open only this tab. The rest of "${DOC_TITLE}" stays hidden from them.</p>
+        </div>
+        <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
+      </div>
+      <div class="modal-body">
+        <div class="scope-note">${icon('group',19)}<span><strong>Tab-only access.</strong> This is separate from the document's main sharing settings — adding someone here won't give them the other ${state.tabs.length - 1} tabs.</span></div>
+        <div class="field-row">
+          <div class="text-field">
+            <input type="email" id="addPersonInput" placeholder=" " />
+            <label>Add people by email</label>
+          </div>
+          <button class="btn btn-filled" id="addPersonBtn">Add</button>
+        </div>
+        <div class="people-list" id="peopleList">${peopleHtml}</div>
+        <div class="divider"></div>
+        <div class="access-block">
+          <div class="access-icon ${linkOn?'on':''}">${linkOn ? icon('public',20) : icon('lock',20)}</div>
+          <div class="access-copy">
+            <div class="access-title">${linkOn ? 'Anyone with the link' : 'Restricted'}</div>
+            <div class="access-sub">${linkOn ? 'Anyone with this tab’s link can access it.' : 'Only people added above can open this tab.'}</div>
+          </div>
+          <select class="md-select access-select" id="linkAccessSelect">
+            <option value="restricted" ${!linkOn?'selected':''}>Restricted</option>
+            <option value="anyone" ${linkOn?'selected':''}>Anyone with the link</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-text" id="copyTabLinkBtn">${icon('link',18)} Copy tab link</button>
+        <button class="btn btn-filled" id="doneBtn">Done</button>
+      </div>
+    `;
+
+    document.getElementById('modalCloseBtn').onclick = closeModal;
+    document.getElementById('doneBtn').onclick = closeModal;
+    document.getElementById('addPersonBtn').onclick = ()=> addPersonToTab(tab);
+    document.getElementById('addPersonInput').addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){ e.preventDefault(); addPersonToTab(tab); }
+    });
+    document.getElementById('linkAccessSelect').onchange = (e)=>{
+      tab.linkAccess = e.target.value;
+      tab.shared = tab.sharedWith.length > 0 || tab.linkAccess === 'anyone';
+      renderTabShareModal(tab);
+      renderTabs();
+    };
+    document.getElementById('copyTabLinkBtn').onclick = ()=>{
+      const url = `https://docs.example/d/8f3k2q/tab/${tab.id}?access=${tab.linkAccess}`;
+      copyToClipboard(url);
+      showToast('Tab link copied.');
+    };
+    el.modal.querySelectorAll('[data-remove-idx]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const idx = Number(btn.dataset.removeIdx);
+        tab.sharedWith.splice(idx,1);
+        tab.shared = tab.sharedWith.length > 0 || tab.linkAccess === 'anyone';
+        renderTabShareModal(tab);
+        renderTabs();
+      };
+    });
+    el.modal.querySelectorAll('[data-role-idx]').forEach(sel=>{
+      sel.onchange = ()=>{
+        const idx = Number(sel.dataset.roleIdx);
+        tab.sharedWith[idx].role = sel.value;
+        showToast(`${tab.sharedWith[idx].name} is now ${sel.value.toLowerCase()} on this tab.`);
+      };
+    });
+  }
+
+  function addPersonToTab(tab){
+    const input = document.getElementById('addPersonInput');
+    const val = input.value.trim();
+    if(!val) return;
+    if(!/^\S+@\S+\.\S+$/.test(val)){ showToast('Enter a valid email address.'); return; }
+    if(tab.sharedWith.some(p=>p.email.toLowerCase() === val.toLowerCase())){
+      showToast('Already has access to this tab.');
+      input.value = '';
+      return;
+    }
+    const namePart = val.split('@')[0].replace(/[._]/g,' ');
+    const name = namePart.replace(/\b\w/g, c=>c.toUpperCase());
+    tab.sharedWith.push({name, email: val, role:'Commenter'});
+    tab.shared = true;
+    input.value = '';
+    renderTabShareModal(tab);
+    renderTabs();
+    showToast(`${name} was added to "${tab.name}".`);
+  }
+
+  /* ---------- Modal: document share ---------- */
+  function openDocShareModal(){
+    const people = [
+      {name:OWNER.name, email:OWNER.email, role:'Owner'},
+      {name:'Sam Lee', email:'sam@brightpath.io', role:'Editor'},
+      {name:'Design Team', email:'design-team@brightpath.io', role:'Viewer'}
+    ];
+    const peopleHtml = people.map(p=>{
+      const c = colorFor(p.email);
+      return `
+      <div class="person-row">
+        <div class="avatar" style="background:${c}">${initials(p.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(p.name)}</div>
+          <div class="person-email">${escapeHtml(p.email)}</div>
+        </div>
+        <span style="font-size:12.5px; color:var(--text-secondary); padding:6px 8px;">${p.role}</span>
+      </div>`;
+    }).join('');
+
+    el.modal.innerHTML = `
+      <div class="modal-head">
+        <div>
+          <h3>Share document</h3>
+          <p>This shares all ${state.tabs.length} tabs in "${DOC_TITLE}" — including Budget (Confidential).</p>
+        </div>
+        <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
+      </div>
+      <div class="modal-body">
+        <div class="scope-note warn">${icon('info',19)}<span>Need to give someone just one section? Use <strong>Share this tab…</strong> from a tab's menu instead — it keeps the rest of the document private.</span></div>
+        <div class="field-row">
+          <div class="text-field">
+            <input type="email" id="addPersonInput" placeholder=" " />
+            <label>Add people by email</label>
+          </div>
+          <button class="btn btn-filled" id="addPersonBtn">Add</button>
+        </div>
+        <div class="people-list">${peopleHtml}</div>
+        <div class="divider"></div>
+        <div class="access-block">
+          <div class="access-icon">${icon('lock',20)}</div>
+          <div class="access-copy">
+            <div class="access-title">Restricted</div>
+            <div class="access-sub">Only people listed above can open this document.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-text" id="copyDocLinkBtn">${icon('link',18)} Copy link</button>
+        <button class="btn btn-filled" id="doneBtn">Done</button>
+      </div>
+    `;
+    document.getElementById('modalCloseBtn').onclick = closeModal;
+    document.getElementById('doneBtn').onclick = closeModal;
+    document.getElementById('addPersonBtn').onclick = ()=> showToast('Adding whole-document collaborators is outside this prototype’s scope.');
+    document.getElementById('copyDocLinkBtn').onclick = ()=>{
+      copyToClipboard('https://docs.example/d/8f3k2q');
+      showToast('Document link copied.');
+    };
+    el.overlay.classList.add('open');
+  }
+
+  function closeModal(){ el.overlay.classList.remove('open'); }
+
+  /* ---------- Tab CRUD ---------- */
+  function addTab(){
+    const id = 'tab-' + Math.random().toString(36).slice(2,8);
+    const name = 'Untitled tab';
+    state.tabs.push({
+      id, name, accent: colorFor(id), shared:false, sharedWith:[], linkAccess:'restricted', renaming:true,
+      content:{ kicker:`Section ${state.tabs.length+1}`, title:name, body:[{p:'Start writing this section — it isn’t shared with anyone until you choose to share it.'}] }
+    });
+    state.activeTabId = id;
+    renderTabs();
+    renderPage();
+    focusRenameInput(id);
+  }
+
+  function startRename(id){
+    const tab = getTab(id);
+    if(!tab) return;
+    closeTabMenu();
+    tab.renaming = true;
+    renderTabs();
+    focusRenameInput(id);
+  }
+  function focusRenameInput(id){
+    requestAnimationFrame(()=>{
+      const input = el.tabList.querySelector(`input[data-rename="${id}"]`);
+      if(input){ input.focus(); input.select(); }
+    });
+  }
+  function commitRename(id, value){
+    const tab = getTab(id);
+    if(!tab) return;
+    const clean = value.trim();
+    tab.name = clean || tab.name;
+    tab.content.title = tab.name;
+    tab.renaming = false;
+    renderTabs();
+    renderPage();
+  }
+
+  function duplicateTab(id){
+    closeTabMenu();
+    const tab = getTab(id);
+    if(!tab) return;
+    const copy = JSON.parse(JSON.stringify(tab));
+    copy.id = 'tab-' + Math.random().toString(36).slice(2,8);
+    copy.name = tab.name + ' (copy)';
+    copy.content.title = copy.name;
+    copy.shared = false;
+    copy.sharedWith = [];
+    copy.linkAccess = 'restricted';
+    const idx = state.tabs.findIndex(t=>t.id===id);
+    state.tabs.splice(idx+1, 0, copy);
+    renderTabs();
+    showToast(`Duplicated "${tab.name}". Sharing settings were not copied.`);
+  }
+
+  function deleteTab(id){
+    closeTabMenu();
+    const idx = state.tabs.findIndex(t=>t.id===id);
+    if(idx === -1) return;
+    if(state.tabs.length === 1){ showToast('A document needs at least one tab.'); return; }
+    const [removed] = state.tabs.splice(idx,1);
+    deletedStash = {tab:removed, idx};
+    if(state.activeTabId === id){
+      state.activeTabId = state.tabs[Math.max(0, idx-1)].id;
+    }
+    renderTabs();
+    renderPage();
+    clearTimeout(deletedTimer);
+    showToast(`Deleted "${removed.name}".`, 'Undo', ()=>{
+      if(deletedStash){
+        state.tabs.splice(deletedStash.idx, 0, deletedStash.tab);
+        state.activeTabId = deletedStash.tab.id;
+        deletedStash = null;
+        renderTabs();
+        renderPage();
+      }
+    });
+    deletedTimer = setTimeout(()=>{ deletedStash = null; }, 6000);
+  }
+
+  /* ---------- Misc chrome ---------- */
+  function toggleStar(){
+    state.starred = !state.starred;
+    el.starIcon.classList.toggle('filled', state.starred);
+    el.starBtn.classList.toggle('on', state.starred);
+  }
+  function applyZoom(){
+    const z = parseFloat(el.zoomSelect.value) || 1;
+    el.pageScale.style.transform = `scale(${z})`;
+  }
+  function toggleToolbar(){
+    const collapsed = el.toolbar.classList.toggle('collapsed');
+    el.collapseIcon.textContent = collapsed ? 'keyboard_arrow_down' : 'keyboard_arrow_up';
+  }
+
+  /* ---------- Event wiring ---------- */
+  el.tabList.addEventListener('click', (e)=>{
+    const kebabBtn = e.target.closest('[data-kebab]');
+    if(kebabBtn){
+      e.stopPropagation();
+      const id = kebabBtn.dataset.kebab;
+      if(state.openMenuTabId === id){ closeTabMenu(); renderTabs(); }
+      else { state.openMenuTabId = id; renderTabs(); }
+      return;
+    }
+    const row = e.target.closest('.tab-row');
+    if(row && !e.target.closest('input')){ selectTab(row.dataset.tab); }
+  });
+
+  el.tabList.addEventListener('dblclick', (e)=>{
+    const row = e.target.closest('.tab-row');
+    if(row) startRename(row.dataset.tab);
+  });
+
+  el.tabList.addEventListener('keydown', (e)=>{
+    if(e.target.matches('[data-rename]') && e.key === 'Enter'){ commitRename(e.target.dataset.rename, e.target.value); }
+  });
+  el.tabList.addEventListener('focusout', (e)=>{
+    if(e.target.matches('[data-rename]')){ commitRename(e.target.dataset.rename, e.target.value); }
+  });
+
+  document.addEventListener('click', (e)=>{
+    if(e.target.closest('.popover')) {
+      const item = e.target.closest('[data-action]');
+      if(item){
+        const {action, id} = item.dataset;
+        if(action === 'share') openTabShareModal(id);
+        if(action === 'rename') startRename(id);
+        if(action === 'duplicate') duplicateTab(id);
+        if(action === 'delete') deleteTab(id);
+      }
+      return;
+    }
+    if(!e.target.closest('[data-kebab]') && state.openMenuTabId){ closeTabMenu(); renderTabs(); }
+  });
+
+  el.overlay.addEventListener('click', (e)=>{ if(e.target === el.overlay) closeModal(); });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape'){
+      if(el.overlay.classList.contains('open')) closeModal();
+      else if(state.openMenuTabId){ closeTabMenu(); renderTabs(); }
+    }
+  });
+
+  el.shareDocBtn.addEventListener('click', openDocShareModal);
+  el.addTabBtn.addEventListener('click', addTab);
+  el.railToggle.addEventListener('click', ()=> el.rail.classList.toggle('rail-open'));
+  el.starBtn.addEventListener('click', toggleStar);
+  el.zoomSelect.addEventListener('change', applyZoom);
+  el.toolbarCollapseBtn.addEventListener('click', toggleToolbar);
+
+  /* ---------- Init ---------- */
+  renderTabs();
+  renderPage();
+})();
+</script>
