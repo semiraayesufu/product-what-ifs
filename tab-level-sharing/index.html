@@ -108,6 +108,7 @@
   .recipient-tabswitch button:hover{ background:color-mix(in srgb, var(--text) 5%, transparent); }
   .recipient-tabswitch button.active{ background:var(--primary-soft); color:var(--on-primary-soft); border-color:transparent; font-weight:500; }
   .recipient-noaccess{ padding:80px 24px; text-align:center; color:var(--text-secondary); font-size:14px; }
+  #recipientToolbarWrap .menu-row{ padding-left:20px; }
 
   /* ===== Icon button ===== */
   .icon-btn{
@@ -261,11 +262,6 @@
   table.budget td.num, table.budget th.num{ text-align:right; font-variant-numeric:tabular-nums; }
   table.budget th{ color:var(--text-secondary); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
   table.budget tr:last-child td{ font-weight:700; border-bottom:none; }
-
-  .edit-toolbar{
-    display:flex; align-items:center; gap:2px; width:fit-content; margin:0 0 18px;
-    padding:5px 8px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--surface-container);
-  }
 
   .doc-body[contenteditable="true"]{ border-radius:var(--radius-sm); outline:2px dashed transparent; transition:outline-color .15s ease; margin:0 -8px; padding:0 8px; }
   .doc-body[contenteditable="true"]:hover{ outline-color:var(--border-strong); }
@@ -509,6 +505,7 @@
   <div class="recipient-shell">
     <header class="recipient-topbar" id="recipientHeader"></header>
     <div class="recipient-tabswitch" id="recipientTabSwitch" style="display:none;"></div>
+    <div id="recipientToolbarWrap"></div>
     <div id="recipientCanvasWrap">
       <main class="canvas">
         <div class="doc-with-margin">
@@ -1001,14 +998,7 @@
     const canComment = access.role === 'Owner' || access.role === 'Editor' || access.role === 'Commenter';
 
     let noteHtml = '';
-    if(mode === 'recipient'){
-      const viaText = access.via==='document' ? 'the entire document'
-        : access.via==='document link' ? 'a public link to the entire document'
-        : access.via==='tab link' ? 'a public link to this tab'
-        : 'this tab only';
-      const sharedBit = (access.via==='document' || access.via==='tab') ? `, shared by ${escapeHtml(OWNER.name)}` : '';
-      noteHtml = `<div class="access-note tight">${icon('group',19)}<span>You have <strong>${access.role}</strong> access to ${viaText}${sharedBit}. ${access.via==='tab' ? `The rest of "${escapeHtml(DOC_TITLE)}" isn't visible to you.` : ''}</span></div>`;
-    } else {
+    if(mode !== 'recipient'){
       const tabGrants = grantsForScope(tab.id);
       const ga = state.generalAccess[tab.id];
       if(tabGrants.length || ga.mode==='anyone'){
@@ -1031,24 +1021,11 @@
       return '';
     }).join('');
 
-    const editToolbarHtml = (mode === 'recipient' && canEdit) ? `
-      <div class="edit-toolbar">
-        <button class="icon-btn sm" data-cmd="bold" aria-label="Bold">${icon('format_bold')}</button>
-        <button class="icon-btn sm" data-cmd="italic" aria-label="Italic">${icon('format_italic')}</button>
-        <button class="icon-btn sm" data-cmd="underline" aria-label="Underline">${icon('format_underlined')}</button>
-        <div class="tb-div"></div>
-        <button class="icon-btn sm" data-cmd="insertUnorderedList" aria-label="Bulleted list">${icon('format_list_bulleted')}</button>
-        <button class="icon-btn sm" data-cmd="insertOrderedList" aria-label="Numbered list">${icon('format_list_numbered')}</button>
-        <div class="tb-div"></div>
-        <button class="icon-btn sm" data-cmd="removeFormat" aria-label="Clear formatting">${icon('format_clear')}</button>
-      </div>` : '';
-
     return `
       <div class="doc-kicker">${c.kicker}</div>
       <h2>${escapeHtml(c.title)}</h2>
       <div style="height:14px"></div>
       ${noteHtml}
-      ${editToolbarHtml}
       <div class="doc-body" contenteditable="${canEdit}" spellcheck="false">${bodyHtml}</div>
     `;
   }
@@ -1059,14 +1036,95 @@
     const docBody = pageEl.querySelector('.doc-body');
     docBody.addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
     docBody.__commentMeta = { tab, canComment, authorName, pageEl, marginEl };
-    pageEl.querySelectorAll('.edit-toolbar [data-cmd]').forEach(btn=>{
+    renderCommentMargin(marginEl, pageEl, tab, canComment);
+  }
+
+  /* ---------- Full editing toolbar, reused on the tab-access page when the viewer can edit ---------- */
+  function buildFullEditToolbarHtml(){
+    return `
+      <nav class="menu-row" aria-label="Menu bar">
+        <button class="menu-btn2">File</button>
+        <button class="menu-btn2">Edit</button>
+        <button class="menu-btn2">View</button>
+        <button class="menu-btn2">Insert</button>
+        <button class="menu-btn2">Format</button>
+        <button class="menu-btn2">Tools</button>
+        <button class="menu-btn2">Extensions</button>
+        <button class="menu-btn2">Help</button>
+      </nav>
+      <div class="toolbar-wrap">
+        <div class="toolbar">
+          <button class="tb-search">${icon('search',18)}Menus</button>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Undo">${icon('undo')}</button>
+          <button class="icon-btn sm" aria-label="Redo">${icon('redo')}</button>
+          <button class="icon-btn sm" aria-label="Print">${icon('print')}</button>
+          <button class="icon-btn sm" aria-label="Spelling and grammar check">${icon('spellcheck')}</button>
+          <button class="icon-btn sm" aria-label="Paint format">${icon('format_paint')}</button>
+          <div class="tb-div"></div>
+          <select class="md-select zoom-select" aria-label="Zoom">
+            <option value="0.75">75%</option>
+            <option value="0.9">90%</option>
+            <option value="1" selected>100%</option>
+            <option value="1.25">125%</option>
+            <option value="1.5">150%</option>
+          </select>
+          <div class="tb-div"></div>
+          <select class="md-select style-select" aria-label="Paragraph style">
+            <option>Heading 2</option>
+            <option>Title</option>
+            <option>Subtitle</option>
+            <option>Normal text</option>
+          </select>
+          <select class="md-select font-select" aria-label="Font">
+            <option>Roboto</option>
+            <option>Arial</option>
+            <option>Georgia</option>
+          </select>
+          <div class="size-stepper">
+            <button class="icon-btn sm" aria-label="Decrease font size">${icon('remove')}</button>
+            <input class="size-field" value="13" aria-label="Font size" />
+            <button class="icon-btn sm" aria-label="Increase font size">${icon('add')}</button>
+          </div>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" data-cmd="bold" aria-label="Bold">${icon('format_bold')}</button>
+          <button class="icon-btn sm" data-cmd="italic" aria-label="Italic">${icon('format_italic')}</button>
+          <button class="icon-btn sm" data-cmd="underline" aria-label="Underline">${icon('format_underlined')}</button>
+          <button class="icon-btn sm" aria-label="Text color">${icon('format_color_text')}</button>
+          <button class="icon-btn sm" aria-label="Highlight color">${icon('ink_highlighter')}</button>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Insert link">${icon('link')}</button>
+          <button class="icon-btn sm" aria-label="Add comment">${icon('add_comment')}</button>
+          <button class="icon-btn sm" aria-label="Insert image">${icon('image')}</button>
+          <div class="tb-div"></div>
+          <button class="icon-btn sm" aria-label="Align">${icon('format_align_left')}</button>
+          <button class="icon-btn sm" aria-label="Line spacing">${icon('format_line_spacing')}</button>
+          <button class="icon-btn sm" aria-label="Checklist">${icon('checklist')}</button>
+          <button class="icon-btn sm" data-cmd="insertUnorderedList" aria-label="Bulleted list">${icon('format_list_bulleted')}</button>
+          <button class="icon-btn sm" data-cmd="insertOrderedList" aria-label="Numbered list">${icon('format_list_numbered')}</button>
+          <button class="icon-btn sm" aria-label="Decrease indent">${icon('format_indent_decrease')}</button>
+          <button class="icon-btn sm" aria-label="Increase indent">${icon('format_indent_increase')}</button>
+          <button class="icon-btn sm" data-cmd="removeFormat" aria-label="Clear formatting">${icon('format_clear')}</button>
+          <div class="tb-right">
+            <select class="md-select editing-select" aria-label="Mode">
+              <option>Editing</option>
+              <option>Suggesting</option>
+              <option>Viewing</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireEditToolbar(toolbarWrap, docBody, tab){
+    toolbarWrap.querySelectorAll('[data-cmd]').forEach(btn=>{
       btn.addEventListener('mousedown', e=> e.preventDefault());
       btn.addEventListener('click', ()=>{
         document.execCommand(btn.dataset.cmd, false, null);
         tab.editedHtml = docBody.innerHTML;
       });
     });
-    renderCommentMargin(marginEl, pageEl, tab, canComment);
   }
 
   function renderPage(){
@@ -1095,10 +1153,14 @@
     const tab = getTab(state.recipientActiveTabId);
     if(!tab) return;
     const access = accessFor(state.previewAs, tab.id) || {role:null, via:null};
+    const canEdit = access.role === 'Owner' || access.role === 'Editor';
+    const toolbarWrap = document.getElementById('recipientToolbarWrap');
+    toolbarWrap.innerHTML = canEdit ? buildFullEditToolbarHtml() : '';
     const container = document.getElementById('recipientPage');
     const marginEl = document.getElementById('recipientCommentMargin');
     container.innerHTML = buildTabContentHtml(tab, access, 'recipient');
     wireTabContentEvents(container, marginEl, tab, access);
+    if(canEdit) wireEditToolbar(toolbarWrap, container.querySelector('.doc-body'), tab);
   }
 
   function renderRecipientHeader(email){
@@ -1157,6 +1219,7 @@
       noAccessEl.hidden = false;
       canvasEl.hidden = true;
       switchEl.style.display = 'none';
+      document.getElementById('recipientToolbarWrap').innerHTML = '';
       return;
     }
     noAccessEl.hidden = true;
