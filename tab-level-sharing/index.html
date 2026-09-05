@@ -248,9 +248,8 @@
   .doc-with-margin{ display:flex; align-items:flex-start; gap:28px; }
   .page-scale{ transform-origin:top center; }
   .page{ width:680px; max-width:100%; background:var(--surface); box-shadow:var(--paper-shadow); border-radius:2px; padding:56px 64px; font-family:var(--font-doc); color:var(--text); line-height:1.65; }
-  .page-top-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
   .page h2{ font-size:23px; margin:0 0 4px; font-weight:700; }
-  .page .doc-kicker{ font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-secondary); font-family:var(--font-ui); font-weight:600; }
+  .page .doc-kicker{ font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-secondary); font-family:var(--font-ui); font-weight:600; margin-bottom:6px; }
   .page p{ margin:0 0 14px; font-size:14.5px; max-width:65ch; }
   .page ul{ margin:0 0 14px; padding-left:22px; }
   .page li{ margin-bottom:6px; font-size:14.5px; }
@@ -263,11 +262,10 @@
   table.budget th{ color:var(--text-secondary); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
   table.budget tr:last-child td{ font-weight:700; border-bottom:none; }
 
-  .role-pill{ font-family:var(--font-ui); font-size:11px; font-weight:700; padding:4px 11px; border-radius:999px; white-space:nowrap; flex-shrink:0; }
-  .role-pill.role-owner, .role-pill.role-editor{ background:var(--primary-soft); color:var(--on-primary-soft); }
-  .role-pill.role-commenter{ background:var(--warn-soft); color:var(--warn); }
-  .role-pill.role-viewer{ background:var(--surface-container); color:var(--text-secondary); border:1px solid var(--border); }
-  .role-pill.role-none{ background:var(--error-soft); color:var(--error); }
+  .edit-toolbar{
+    display:flex; align-items:center; gap:2px; width:fit-content; margin:0 0 18px;
+    padding:5px 8px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--surface-container);
+  }
 
   .doc-body[contenteditable="true"]{ border-radius:var(--radius-sm); outline:2px dashed transparent; transition:outline-color .15s ease; margin:0 -8px; padding:0 8px; }
   .doc-body[contenteditable="true"]:hover{ outline-color:var(--border-strong); }
@@ -825,12 +823,6 @@
   }
 
   /* ---------- Page (content, access note, comments) ---------- */
-  function roleBadge(role){
-    const labels = {Owner:'Owner', Editor:'Can edit', Commenter:'Can comment', Viewer:'Can view'};
-    const cls = role ? role.toLowerCase() : 'none';
-    return `<span class="role-pill role-${cls}">${labels[role] || 'No access'}</span>`;
-  }
-
   /* ---------- Comments: select text -> highlight + margin card (Google Docs style) ---------- */
   let pendingComment = null;
 
@@ -1039,14 +1031,24 @@
       return '';
     }).join('');
 
+    const editToolbarHtml = (mode === 'recipient' && canEdit) ? `
+      <div class="edit-toolbar">
+        <button class="icon-btn sm" data-cmd="bold" aria-label="Bold">${icon('format_bold')}</button>
+        <button class="icon-btn sm" data-cmd="italic" aria-label="Italic">${icon('format_italic')}</button>
+        <button class="icon-btn sm" data-cmd="underline" aria-label="Underline">${icon('format_underlined')}</button>
+        <div class="tb-div"></div>
+        <button class="icon-btn sm" data-cmd="insertUnorderedList" aria-label="Bulleted list">${icon('format_list_bulleted')}</button>
+        <button class="icon-btn sm" data-cmd="insertOrderedList" aria-label="Numbered list">${icon('format_list_numbered')}</button>
+        <div class="tb-div"></div>
+        <button class="icon-btn sm" data-cmd="removeFormat" aria-label="Clear formatting">${icon('format_clear')}</button>
+      </div>` : '';
+
     return `
-      <div class="page-top-row">
-        <div class="doc-kicker">${c.kicker}</div>
-        ${roleBadge(access.role)}
-      </div>
+      <div class="doc-kicker">${c.kicker}</div>
       <h2>${escapeHtml(c.title)}</h2>
       <div style="height:14px"></div>
       ${noteHtml}
+      ${editToolbarHtml}
       <div class="doc-body" contenteditable="${canEdit}" spellcheck="false">${bodyHtml}</div>
     `;
   }
@@ -1057,6 +1059,13 @@
     const docBody = pageEl.querySelector('.doc-body');
     docBody.addEventListener('input', (e)=>{ tab.editedHtml = e.currentTarget.innerHTML; });
     docBody.__commentMeta = { tab, canComment, authorName, pageEl, marginEl };
+    pageEl.querySelectorAll('.edit-toolbar [data-cmd]').forEach(btn=>{
+      btn.addEventListener('mousedown', e=> e.preventDefault());
+      btn.addEventListener('click', ()=>{
+        document.execCommand(btn.dataset.cmd, false, null);
+        tab.editedHtml = docBody.innerHTML;
+      });
+    });
     renderCommentMargin(marginEl, pageEl, tab, canComment);
   }
 
