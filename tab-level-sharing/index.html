@@ -192,7 +192,9 @@
   .tab-row:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); }
   .tab-row.active{ background:var(--primary-soft); }
   .tab-row.active .tab-name{ color:var(--primary); font-weight:500; }
+  .tab-row.is-subtab{ padding-left:34px; }
   .tab-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .tab-emoji{ width:16px; text-align:center; font-size:15px; line-height:1; flex-shrink:0; }
   .tab-name{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; color:var(--text); }
   .tab-name-input{ flex:1 1 auto; min-width:0; border:1px solid var(--primary); border-radius:6px; padding:3px 8px; background:var(--surface); color:var(--text); font-size:13.5px; }
   .tab-badge{ flex-shrink:0; display:flex; align-items:center; color:var(--primary); }
@@ -213,7 +215,13 @@
   .popover-item.danger{ color:var(--error); }
   .popover-item .material-symbols-outlined{ font-size:19px; color:var(--text-secondary); }
   .popover-item.danger .material-symbols-outlined{ color:var(--error); }
+  .popover-item .chev{ margin-left:auto; color:var(--text-tertiary); font-size:18px; }
+  .popover-item:disabled{ opacity:.4; cursor:not-allowed; }
+  .popover-item:disabled:hover{ background:none; }
   .popover-divider{ height:1px; background:var(--border); margin:6px 4px; }
+  .emoji-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; padding:2px; }
+  .emoji-btn{ font-size:19px; line-height:1; padding:8px 0; border-radius:6px; background:none; border:none; cursor:pointer; }
+  .emoji-btn:hover{ background:color-mix(in srgb, var(--text) 8%, transparent); }
 
   /* ===== Canvas / paper ===== */
   .canvas{ flex:1 1 auto; overflow-y:auto; padding:40px 24px 100px; display:flex; justify-content:center; min-width:0; }
@@ -522,6 +530,10 @@
     ]
   };
 
+  state.tabs.forEach(t=>{ if(t.parentId===undefined) t.parentId=null; if(t.emoji===undefined) t.emoji=null; });
+
+  const EMOJIS = ['📄','📝','📊','💰','🎯','🚀','✅','📌','🔒','👥','📅','💡','⚙️','🎨','📈','❤️'];
+
   let deletedStash = null;
   let deletedTimer = null;
 
@@ -548,6 +560,61 @@
   };
 
   function getTab(id){ return state.tabs.find(t=>t.id===id); }
+  function childrenOf(id){ return state.tabs.filter(t=>t.parentId===id); }
+
+  /* Tabs are kept in a flat array, but a parent's children always sit
+     immediately after it — "blocks" below is that grouping made explicit,
+     so reordering a parent carries its children along with it. */
+  function getBlocks(){
+    const blocks = [];
+    state.tabs.forEach(t=>{
+      if(!t.parentId) blocks.push([t]);
+      else blocks[blocks.length-1].push(t);
+    });
+    return blocks;
+  }
+  function setFromBlocks(blocks){ state.tabs = blocks.flat(); }
+
+  function lastDescendantIndex(id){
+    const idx = state.tabs.findIndex(t=>t.id===id);
+    let i = idx+1;
+    while(state.tabs[i] && state.tabs[i].parentId === id) i++;
+    return i-1;
+  }
+
+  function moveTab(id, dir){
+    const tab = getTab(id);
+    if(!tab) return;
+    const blocks = getBlocks();
+    if(tab.parentId){
+      const block = blocks.find(b=>b[0].id===tab.parentId);
+      if(!block) return;
+      const i = block.findIndex(t=>t.id===id);
+      const j = i+dir;
+      if(j<1 || j>=block.length) return;
+      [block[i], block[j]] = [block[j], block[i]];
+    } else {
+      const bi = blocks.findIndex(b=>b[0].id===id);
+      const bj = bi+dir;
+      if(bj<0 || bj>=blocks.length) return;
+      [blocks[bi], blocks[bj]] = [blocks[bj], blocks[bi]];
+    }
+    setFromBlocks(blocks);
+    renderTabs();
+  }
+
+  function moveTabInto(id, targetId){
+    const tab = getTab(id);
+    if(!tab || tab.id === targetId) return;
+    const idx = state.tabs.indexOf(tab);
+    state.tabs.splice(idx, 1);
+    tab.parentId = targetId;
+    const insertAt = lastDescendantIndex(targetId) + 1;
+    state.tabs.splice(insertAt, 0, tab);
+    closeTabMenu();
+    renderTabs();
+    showToast(`Moved "${tab.name}" into "${getTab(targetId).name}".`);
+  }
 
   function renderTabs(){
     el.tabList.innerHTML = state.tabs.map(tab=>{
@@ -559,9 +626,10 @@
       } else {
         nameHtml = `<span class="tab-name">${escapeHtml(tab.name)}</span>`;
       }
+      const leading = tab.emoji ? `<span class="tab-emoji">${tab.emoji}</span>` : `<span class="tab-dot" style="background:${tab.accent}"></span>`;
       return `
-      <li class="tab-row ${active?'active':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
-        <span class="tab-dot" style="background:${tab.accent}"></span>
+      <li class="tab-row ${active?'active':''} ${tab.parentId?'is-subtab':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
+        ${leading}
         ${nameHtml}
         ${showShareBadge ? `<span class="tab-badge" title="Shared with people outside the document">${icon('link',17)}</span>` : ''}
         <button class="icon-btn sm tab-kebab" data-kebab="${tab.id}" aria-label="Tab options">${icon('more_vert',18)}</button>
@@ -576,15 +644,41 @@
     if(!row) return;
     const existing = document.getElementById('tabPopover');
     if(existing) existing.remove();
+    document.getElementById('emojiPopover')?.remove();
+    document.getElementById('moveIntoPopover')?.remove();
+
+    const tab = getTab(tabId);
+    const blocks = getBlocks();
+    let canMoveUp, canMoveDown;
+    if(tab.parentId){
+      const block = blocks.find(b=>b[0].id===tab.parentId);
+      const i = block.findIndex(t=>t.id===tabId);
+      canMoveUp = i>1; canMoveDown = i<block.length-1;
+    } else {
+      const bi = blocks.findIndex(b=>b[0].id===tabId);
+      canMoveUp = bi>0; canMoveDown = bi<blocks.length-1;
+    }
+    const hasChildren = childrenOf(tabId).length>0;
+    const moveTargets = state.tabs.filter(t=>!t.parentId && t.id!==tabId);
+
     const pop = document.createElement('div');
     pop.className = 'popover';
     pop.id = 'tabPopover';
     pop.innerHTML = `
       <button class="popover-item" data-action="share" data-id="${tabId}">${icon('group',19)} Share this tab…</button>
-      <button class="popover-item" data-action="rename" data-id="${tabId}">${icon('edit',19)} Rename</button>
-      <button class="popover-item" data-action="duplicate" data-id="${tabId}">${icon('file_copy',19)} Duplicate</button>
       <div class="popover-divider"></div>
+      ${tab.parentId ? '' : `<button class="popover-item" data-action="add-subtab" data-id="${tabId}">${icon('add',19)} Add subtab</button>`}
       <button class="popover-item danger" data-action="delete" data-id="${tabId}">${icon('delete',19)} Delete</button>
+      <button class="popover-item" data-action="duplicate" data-id="${tabId}">${icon('file_copy',19)} Duplicate</button>
+      <button class="popover-item" data-action="rename" data-id="${tabId}">${icon('edit',19)} Rename</button>
+      <button class="popover-item" data-action="emoji-toggle" data-id="${tabId}">${icon('add_reaction',19)} Choose emoji</button>
+      <div class="popover-divider"></div>
+      <button class="popover-item" data-action="copy-link" data-id="${tabId}">${icon('link',19)} Copy link</button>
+      <button class="popover-item" data-action="outline" data-id="${tabId}">${icon('toc',19)} Show outline</button>
+      <div class="popover-divider"></div>
+      ${canMoveUp ? `<button class="popover-item" data-action="move-up" data-id="${tabId}">${icon('arrow_upward',19)} Move up</button>` : ''}
+      ${canMoveDown ? `<button class="popover-item" data-action="move-down" data-id="${tabId}">${icon('arrow_downward',19)} Move down</button>` : ''}
+      ${(!hasChildren && moveTargets.length) ? `<button class="popover-item" data-action="move-into-toggle" data-id="${tabId}">${icon('subdirectory_arrow_right',19)} Move into<span class="chev material-symbols-outlined">chevron_right</span></button>` : ''}
     `;
     document.body.appendChild(pop);
     const rowRect = row.getBoundingClientRect();
@@ -592,10 +686,49 @@
     pop.style.left = Math.min(rowRect.left + window.scrollX, window.innerWidth - 216) + 'px';
   }
 
+  function openEmojiPopover(tabId){
+    document.getElementById('emojiPopover')?.remove();
+    document.getElementById('moveIntoPopover')?.remove();
+    const trigger = document.querySelector(`#tabPopover [data-action="emoji-toggle"]`);
+    if(!trigger) return;
+    const pop = document.createElement('div');
+    pop.className = 'popover';
+    pop.id = 'emojiPopover';
+    pop.style.minWidth = '150px';
+    pop.innerHTML = `
+      <div class="emoji-grid">
+        ${EMOJIS.map(e=>`<button class="emoji-btn" data-emoji="${e}" data-id="${tabId}">${e}</button>`).join('')}
+      </div>
+      <div class="popover-divider"></div>
+      <button class="popover-item" data-action="emoji-clear" data-id="${tabId}">${icon('close',19)} Remove emoji</button>
+    `;
+    document.body.appendChild(pop);
+    const r = trigger.getBoundingClientRect();
+    pop.style.top = (r.top + window.scrollY) + 'px';
+    pop.style.left = Math.min(r.right + window.scrollX + 6, window.innerWidth - 166) + 'px';
+  }
+
+  function openMoveIntoPopover(tabId){
+    document.getElementById('emojiPopover')?.remove();
+    document.getElementById('moveIntoPopover')?.remove();
+    const trigger = document.querySelector(`#tabPopover [data-action="move-into-toggle"]`);
+    if(!trigger) return;
+    const targets = state.tabs.filter(t=>!t.parentId && t.id!==tabId);
+    const pop = document.createElement('div');
+    pop.className = 'popover';
+    pop.id = 'moveIntoPopover';
+    pop.innerHTML = targets.map(t=>`<button class="popover-item" data-action="move-into" data-id="${tabId}" data-target="${t.id}">${escapeHtml(t.name)}</button>`).join('');
+    document.body.appendChild(pop);
+    const r = trigger.getBoundingClientRect();
+    pop.style.top = (r.top + window.scrollY) + 'px';
+    pop.style.left = Math.min(r.right + window.scrollX + 6, window.innerWidth - 216) + 'px';
+  }
+
   function closeTabMenu(){
     state.openMenuTabId = null;
-    const existing = document.getElementById('tabPopover');
-    if(existing) existing.remove();
+    document.getElementById('tabPopover')?.remove();
+    document.getElementById('emojiPopover')?.remove();
+    document.getElementById('moveIntoPopover')?.remove();
   }
 
   function renderPage(){
@@ -866,17 +999,35 @@
   function closeModal(){ el.overlay.classList.remove('open'); }
 
   /* ---------- Tab CRUD ---------- */
-  function addTab(){
+  function makeTab(name, parentId){
     const id = 'tab-' + Math.random().toString(36).slice(2,8);
-    const name = 'Untitled tab';
-    state.tabs.push({
-      id, name, accent: colorFor(id), shared:false, sharedWith:[], linkAccess:'restricted', renaming:true,
+    return {
+      id, name, parentId: parentId||null, emoji:null, accent: colorFor(id),
+      shared:false, sharedWith:[], linkAccess:'restricted', renaming:true,
       content:{ kicker:`Section ${state.tabs.length+1}`, title:name, body:[{p:'Start writing this section — it isn’t shared with anyone until you choose to share it.'}] }
-    });
-    state.activeTabId = id;
+    };
+  }
+
+  function addTab(){
+    const tab = makeTab('Untitled tab', null);
+    state.tabs.push(tab);
+    state.activeTabId = tab.id;
     renderTabs();
     renderPage();
-    focusRenameInput(id);
+    focusRenameInput(tab.id);
+  }
+
+  function addSubtab(parentId){
+    closeTabMenu();
+    const parent = getTab(parentId);
+    if(!parent) return;
+    const tab = makeTab('Untitled subtab', parentId);
+    const insertAt = lastDescendantIndex(parentId) + 1;
+    state.tabs.splice(insertAt, 0, tab);
+    state.activeTabId = tab.id;
+    renderTabs();
+    renderPage();
+    focusRenameInput(tab.id);
   }
 
   function startRename(id){
@@ -915,29 +1066,37 @@
     copy.shared = false;
     copy.sharedWith = [];
     copy.linkAccess = 'restricted';
-    const idx = state.tabs.findIndex(t=>t.id===id);
-    state.tabs.splice(idx+1, 0, copy);
+    delete copy.renaming;
+    const insertAt = tab.parentId ? state.tabs.indexOf(tab)+1 : lastDescendantIndex(id)+1;
+    state.tabs.splice(insertAt, 0, copy);
     renderTabs();
     showToast(`Duplicated "${tab.name}". Sharing settings were not copied.`);
   }
 
   function deleteTab(id){
     closeTabMenu();
-    const idx = state.tabs.findIndex(t=>t.id===id);
-    if(idx === -1) return;
-    if(state.tabs.length === 1){ showToast('A document needs at least one tab.'); return; }
-    const [removed] = state.tabs.splice(idx,1);
-    deletedStash = {tab:removed, idx};
-    if(state.activeTabId === id){
-      state.activeTabId = state.tabs[Math.max(0, idx-1)].id;
+    const tab = getTab(id);
+    if(!tab) return;
+    const startIdx = state.tabs.indexOf(tab);
+    let count = 1;
+    if(!tab.parentId){
+      while(state.tabs[startIdx+count] && state.tabs[startIdx+count].parentId === tab.id) count++;
+    }
+    if(state.tabs.length - count < 1){ showToast('A document needs at least one tab.'); return; }
+    const removed = state.tabs.splice(startIdx, count);
+    deletedStash = {removed, startIdx};
+    if(removed.some(t=>t.id===state.activeTabId)){
+      const fallback = state.tabs[Math.max(0, startIdx-1)] || state.tabs[0];
+      state.activeTabId = fallback.id;
     }
     renderTabs();
     renderPage();
     clearTimeout(deletedTimer);
-    showToast(`Deleted "${removed.name}".`, 'Undo', ()=>{
+    const label = removed.length>1 ? `Deleted "${tab.name}" and ${removed.length-1} subtab${removed.length-1>1?'s':''}.` : `Deleted "${tab.name}".`;
+    showToast(label, 'Undo', ()=>{
       if(deletedStash){
-        state.tabs.splice(deletedStash.idx, 0, deletedStash.tab);
-        state.activeTabId = deletedStash.tab.id;
+        state.tabs.splice(deletedStash.startIdx, 0, ...deletedStash.removed);
+        state.activeTabId = deletedStash.removed[0].id;
         deletedStash = null;
         renderTabs();
         renderPage();
@@ -989,13 +1148,35 @@
 
   document.addEventListener('click', (e)=>{
     if(e.target.closest('.popover')) {
+      const emojiBtn = e.target.closest('[data-emoji]');
+      if(emojiBtn){
+        const tab = getTab(emojiBtn.dataset.id);
+        if(tab){ tab.emoji = emojiBtn.dataset.emoji; }
+        closeTabMenu();
+        renderTabs();
+        return;
+      }
       const item = e.target.closest('[data-action]');
       if(item){
-        const {action, id} = item.dataset;
+        const {action, id, target} = item.dataset;
+        const tab = getTab(id);
         if(action === 'share') openTabShareModal(id);
         if(action === 'rename') startRename(id);
         if(action === 'duplicate') duplicateTab(id);
         if(action === 'delete') deleteTab(id);
+        if(action === 'add-subtab') addSubtab(id);
+        if(action === 'emoji-toggle') openEmojiPopover(id);
+        if(action === 'emoji-clear'){ if(tab) tab.emoji = null; closeTabMenu(); renderTabs(); }
+        if(action === 'copy-link'){
+          copyToClipboard(`https://docs.example/d/8f3k2q#tab=${id}`);
+          closeTabMenu();
+          showToast('Link to this tab copied.');
+        }
+        if(action === 'outline'){ closeTabMenu(); showToast("This tab doesn't have enough headings for an outline yet."); }
+        if(action === 'move-up'){ moveTab(id, -1); closeTabMenu(); renderTabs(); }
+        if(action === 'move-down'){ moveTab(id, 1); closeTabMenu(); renderTabs(); }
+        if(action === 'move-into-toggle') openMoveIntoPopover(id);
+        if(action === 'move-into') moveTabInto(id, target);
       }
       return;
     }
