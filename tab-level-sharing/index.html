@@ -341,8 +341,7 @@
   .role-select{ font-size:12.5px; padding:6px 26px 6px 10px; }
   .role-static{ font-size:12.5px; color:var(--text-secondary); padding:6px 8px; }
   .person-remove{ color:var(--text-secondary); }
-  .person-tags{ display:flex; flex-wrap:wrap; gap:6px; width:100%; margin:2px 0 0 42px; }
-  .person-tag{ font-size:11px; background:var(--surface-container); color:var(--text-secondary); border:1px solid var(--border); border-radius:999px; padding:3px 10px; white-space:nowrap; }
+  .person-scope-tag{ font-size:11px; color:var(--text-tertiary); margin-top:2px; }
   .divider{ height:1px; background:var(--border); margin:16px 0; }
   .access-block{ display:flex; align-items:center; gap:14px; }
   .access-icon{ width:40px; height:40px; border-radius:50%; background:var(--surface-container); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-secondary); }
@@ -1310,16 +1309,6 @@
     el.overlay.classList.add('open');
   }
 
-  function buildUnionPeople(scopes){
-    const map = new Map();
-    scopes.forEach(scope=>{
-      grantsForScope(scope).forEach(g=>{
-        if(!map.has(g.email)) map.set(g.email, {name:g.name, email:g.email, entries:[]});
-        map.get(g.email).entries.push({scope, label:scopeLabel(scope), role:g.role, id:g.id});
-      });
-    });
-    return [...map.values()];
-  }
 
   function closeTabSelectMenu(){ document.getElementById('tabSelectMenu')?.remove(); }
 
@@ -1386,70 +1375,69 @@
     const effScopes = scopes.length ? scopes : ['document'];
     const isMulti = effScopes.length > 1;
 
+    const ownerRow = `
+      <div class="person-row">
+        <div class="avatar" style="background:${colorFor(OWNER.email)}">${initials(OWNER.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(OWNER.name)} (you)</div>
+          <div class="person-email">${escapeHtml(OWNER.email)}</div>
+        </div>
+        <span class="role-static">Owner</span>
+      </div>`;
+
+    function inheritedRowHtml(g){
+      return `
+      <div class="person-row">
+        <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(g.name)}</div>
+          <div class="person-email">${escapeHtml(g.email)}</div>
+        </div>
+        <span class="role-static">${g.role} · Entire document</span>
+      </div>`;
+    }
+
+    function grantRowHtml(g, scope){
+      const scopeTag = scope ? `<div class="person-scope-tag">${escapeHtml(scopeLabel(scope))}</div>` : '';
+      return `
+      <div class="person-row">
+        <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
+        <div class="person-info">
+          <div class="person-name">${escapeHtml(g.name)}</div>
+          <div class="person-email">${escapeHtml(g.email)}</div>
+          ${scopeTag}
+        </div>
+        <select class="md-select role-select" data-grant-id="${g.id}" data-grant-scope="${scope||''}">
+          <option ${g.role==='Viewer'?'selected':''}>Viewer</option>
+          <option ${g.role==='Commenter'?'selected':''}>Commenter</option>
+          <option ${g.role==='Editor'?'selected':''}>Editor</option>
+        </select>
+        <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
+      </div>`;
+    }
+
     let peopleSectionHtml;
     if(!isMulti){
       const scope = effScopes[0];
       const grants = grantsForScope(scope);
       const inherited = scope!=='document' ? grantsForScope('document') : [];
-
-      const ownerRow = `
-        <div class="person-row">
-          <div class="avatar" style="background:${colorFor(OWNER.email)}">${initials(OWNER.name)}</div>
-          <div class="person-info">
-            <div class="person-name">${escapeHtml(OWNER.name)} (you)</div>
-            <div class="person-email">${escapeHtml(OWNER.email)}</div>
-          </div>
-          <span class="role-static">Owner</span>
-        </div>`;
-
-      const inheritedHtml = inherited.map(g=>`
-        <div class="person-row">
-          <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
-          <div class="person-info">
-            <div class="person-name">${escapeHtml(g.name)}</div>
-            <div class="person-email">${escapeHtml(g.email)}</div>
-          </div>
-          <span class="role-static">${g.role} · Entire document</span>
-        </div>`).join('');
-
-      const grantsHtml = grants.map(g=>`
-        <div class="person-row">
-          <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
-          <div class="person-info">
-            <div class="person-name">${escapeHtml(g.name)}</div>
-            <div class="person-email">${escapeHtml(g.email)}</div>
-          </div>
-          <select class="md-select role-select" data-grant-id="${g.id}">
-            <option ${g.role==='Viewer'?'selected':''}>Viewer</option>
-            <option ${g.role==='Commenter'?'selected':''}>Commenter</option>
-            <option ${g.role==='Editor'?'selected':''}>Editor</option>
-          </select>
-          <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
-        </div>`).join('');
+      const inheritedHtml = inherited.map(inheritedRowHtml).join('');
+      const grantsHtml = grants.map(g=>grantRowHtml(g, null)).join('');
 
       peopleSectionHtml = `
         <div class="section-head">People with access</div>
         <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${grantsHtml}</div>
       `;
     } else {
-      const people = buildUnionPeople(effScopes);
-      const peopleHtml = people.map(p=>{
-        const tags = p.entries.map(e=>`<span class="person-tag">${escapeHtml(e.label)} · ${e.role}</span>`).join('');
-        return `
-        <div class="person-row">
-          <div class="avatar" style="background:${colorFor(p.email)}">${initials(p.name)}</div>
-          <div class="person-info">
-            <div class="person-name">${escapeHtml(p.name)}</div>
-            <div class="person-email">${escapeHtml(p.email)}</div>
-          </div>
-          <button class="icon-btn sm" data-remove-union="${p.email}" aria-label="Remove">${icon('close',18)}</button>
-          <div class="person-tags">${tags}</div>
-        </div>`;
-      }).join('') || `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has access to these tabs yet.</p>`;
+      const inherited = grantsForScope('document');
+      const inheritedHtml = inherited.map(inheritedRowHtml).join('');
+      const tabGrantsHtml = effScopes.map(scope=> grantsForScope(scope).map(g=>grantRowHtml(g, scope)).join('')).join('');
+      const emptyHtml = (!inherited.length && !tabGrantsHtml)
+        ? `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has access to these tabs yet.</p>` : '';
 
       peopleSectionHtml = `
-        <div class="section-head">People with access to these tabs</div>
-        <div class="people-list" id="peopleList">${peopleHtml}</div>
+        <div class="section-head">People with access</div>
+        <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${tabGrantsHtml}${emptyHtml}</div>
       `;
     }
 
@@ -1549,23 +1537,14 @@
         renderTabs();
       };
     });
-    el.modal.querySelectorAll('[data-remove-union]').forEach(btn=>{
-      btn.onclick = ()=>{
-        const email = btn.dataset.removeUnion;
-        const idsToRemove = new Set();
-        effScopes.forEach(scope=> grantsForScope(scope).filter(g=>g.email===email).forEach(g=>idsToRemove.add(g.id)));
-        state.grants = state.grants.filter(g=>!idsToRemove.has(g.id));
-        renderShareModal(scopes);
-        renderTabs();
-      };
-    });
     el.modal.querySelectorAll('[data-grant-id]').forEach(sel=>{
       sel.onchange = ()=>{
         const g = state.grants.find(g=>g.id===sel.dataset.grantId);
         if(g){
           g.role = sel.value;
-          const landingTab = effScopes.find(s=>s!=='document');
-          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(effScopes[0])}".`, 'Preview', ()=>{
+          const rowScope = sel.dataset.grantScope || effScopes[0];
+          const landingTab = rowScope !== 'document' ? rowScope : undefined;
+          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(rowScope)}".`, 'Preview', ()=>{
             closeModal();
             goToRecipientView(g.email, landingTab);
           });
