@@ -344,7 +344,6 @@
   .role-select:focus, .role-select-inline:focus{ border-color:var(--primary); outline:none; }
   .role-static{ font-size:12.5px; color:var(--text-secondary); padding:6px 8px; }
   .person-remove{ color:var(--text-secondary); }
-  .people-group-label{ font-size:11px; font-weight:700; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; padding:10px 2px 4px; }
   .divider{ height:1px; background:var(--border); margin:16px 0; }
   .access-block{ display:flex; align-items:center; gap:14px; }
   .access-icon{ width:40px; height:40px; border-radius:50%; background:var(--surface-container); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-secondary); }
@@ -1447,11 +1446,9 @@
     } else {
       const inherited = grantsForScope('document');
       const inheritedHtml = inherited.map(inheritedRowHtml).join('');
-      const tabGroupsHtml = effScopes.map(scope=>{
-        const grants = grantsForScope(scope);
-        if(!grants.length) return '';
-        return `<div class="people-group-label">${escapeHtml(scopeLabel(scope))}</div>${grants.map(g=>grantRowHtml(g, scope)).join('')}`;
-      }).join('');
+      const tabGroupsHtml = effScopes.map(scope=>
+        grantsForScope(scope).map(g=>grantRowHtml(g, scope)).join('')
+      ).join('');
       const anyTabGrants = effScopes.some(scope=> grantsForScope(scope).length);
       const emptyHtml = (!inherited.length && !anyTabGrants)
         ? `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has access to these tabs yet.</p>` : '';
