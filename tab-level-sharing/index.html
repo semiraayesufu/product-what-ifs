@@ -1347,7 +1347,7 @@
       </div>
       <div class="modal-body">
         <div class="scope-row">
-          <label for="scopeSelect">Scope</label>
+          <label for="scopeSelect">Tab</label>
           <select class="md-select" id="scopeSelect">
             ${scopeOptions().map(o=>`<option value="${o.value}" ${o.value===scope?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}
           </select>
