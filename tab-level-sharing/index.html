@@ -214,7 +214,6 @@
   .tab-row.active{ background:var(--primary-soft); }
   .tab-row.active .tab-name{ color:var(--primary); font-weight:500; }
   .tab-row.is-subtab{ padding-left:34px; }
-  .tab-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
   .tab-emoji{ width:16px; text-align:center; font-size:15px; line-height:1; flex-shrink:0; }
   .tab-name{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13.5px; color:var(--text); }
   .tab-name-input{ flex:1 1 auto; min-width:0; border:1px solid var(--primary); border-radius:6px; padding:3px 8px; background:var(--surface); color:var(--text); font-size:13.5px; }
@@ -302,29 +301,35 @@
   /* ===== Modal ===== */
   .overlay{ position:fixed; inset:0; background:var(--scrim); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
   .overlay.open{ display:flex; }
-  .modal{ background:var(--surface-container-high); border-radius:var(--radius-lg); box-shadow:var(--shadow-3); width:100%; max-width:520px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+  .modal{ background:var(--surface-container-high); border-radius:var(--radius-lg); box-shadow:var(--shadow-3); width:100%; max-width:560px; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
   .modal-head{ padding:24px 24px 4px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
   .modal-head h3{ margin:0; font-size:22px; font-weight:400; color:var(--text); }
   .modal-head-actions{ display:flex; gap:2px; margin-top:-6px; }
   .modal-body{ padding:16px 24px; overflow-y:auto; }
-  .scope-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; font-size:13px; color:var(--text-secondary); }
-  .scope-row select{ font-size:13px; padding:7px 30px 7px 12px; max-width:280px; }
+  .pill-label{ font-size:12.5px; color:var(--text-secondary); font-weight:500; margin-bottom:8px; }
+  .pill-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+  .pill-btn{ border:1px solid var(--border-strong); background:var(--surface); color:var(--text); border-radius:var(--radius-full); padding:7px 14px; font-size:13px; cursor:pointer; }
+  .pill-btn:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .pill-btn.selected{ background:var(--primary); color:var(--on-primary); border-color:transparent; }
   .text-field{ position:relative; flex:1 1 auto; min-width:0; }
   .text-field input{ width:100%; height:52px; border:1px solid var(--border); border-radius:var(--radius-xs); padding:0 14px; background:transparent; color:var(--text); min-width:0; }
   .text-field label{ position:absolute; left:11px; top:-8px; background:var(--surface-container-high); padding:0 5px; font-size:11.5px; color:var(--text-secondary); }
   .text-field input:focus{ border:2px solid var(--primary); }
   .text-field input:focus + label{ color:var(--primary); }
   .field-row{ display:flex; gap:8px; margin-bottom:18px; }
+  .role-select-inline{ font-size:13px; padding:0 26px 0 12px; height:52px; flex-shrink:0; }
   .section-head{ font-size:15px; font-weight:500; margin:18px 0 8px; color:var(--text); }
   .section-head:first-child{ margin-top:0; }
   .people-list{ display:flex; flex-direction:column; gap:2px; margin-bottom:6px; }
-  .person-row{ display:flex; align-items:center; gap:10px; padding:7px 2px; }
-  .person-info{ flex:1 1 auto; min-width:0; }
+  .person-row{ display:flex; align-items:center; gap:10px; padding:7px 2px; flex-wrap:wrap; }
+  .person-info{ flex:1 1 auto; min-width:140px; }
   .person-name{ font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .person-email{ font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .role-select{ font-size:12.5px; padding:6px 26px 6px 10px; }
-  .role-static{ font-size:12.5px; color:var(--text-secondary); padding:6px 8px; white-space:nowrap; }
+  .role-static{ font-size:12.5px; color:var(--text-secondary); padding:6px 8px; }
   .person-remove{ color:var(--text-secondary); }
+  .person-tags{ display:flex; flex-wrap:wrap; gap:6px; width:100%; margin:2px 0 0 42px; }
+  .person-tag{ font-size:11px; background:var(--surface-container); color:var(--text-secondary); border:1px solid var(--border); border-radius:999px; padding:3px 10px; white-space:nowrap; }
   .divider{ height:1px; background:var(--border); margin:16px 0; }
   .access-block{ display:flex; align-items:center; gap:14px; }
   .access-icon{ width:40px; height:40px; border-radius:50%; background:var(--surface-container); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-secondary); }
@@ -717,7 +722,7 @@
       } else {
         nameHtml = `<span class="tab-name">${escapeHtml(tab.name)}</span>`;
       }
-      const leading = tab.emoji ? `<span class="tab-emoji">${tab.emoji}</span>` : `<span class="tab-dot" style="background:${tab.accent}"></span>`;
+      const leading = tab.emoji ? `<span class="tab-emoji">${tab.emoji}</span>` : '';
       return `
       <li class="tab-row ${active?'active':''} ${tab.parentId?'is-subtab':''} ${state.openMenuTabId===tab.id?'menu-open':''}" data-tab="${tab.id}">
         ${leading}
@@ -1287,80 +1292,108 @@
 
   function openShareModal(scope){
     closeTabMenu();
-    renderShareModal(scope);
+    renderShareModal([scope]);
     el.overlay.classList.add('open');
   }
 
-  function renderShareModal(scope){
-    const grants = grantsForScope(scope);
-    const inherited = scope!=='document' ? grantsForScope('document') : [];
-    const ga = state.generalAccess[scope];
-    const linkOn = ga.mode === 'anyone';
+  function buildUnionPeople(scopes){
+    const map = new Map();
+    scopes.forEach(scope=>{
+      grantsForScope(scope).forEach(g=>{
+        if(!map.has(g.email)) map.set(g.email, {name:g.name, email:g.email, entries:[]});
+        map.get(g.email).entries.push({scope, label:scopeLabel(scope), role:g.role, id:g.id});
+      });
+    });
+    return [...map.values()];
+  }
 
-    const ownerRow = `
-      <div class="person-row">
-        <div class="avatar" style="background:${colorFor(OWNER.email)}">${initials(OWNER.name)}</div>
-        <div class="person-info">
-          <div class="person-name">${escapeHtml(OWNER.name)} (you)</div>
-          <div class="person-email">${escapeHtml(OWNER.email)}</div>
-        </div>
-        <span class="role-static">Owner</span>
-      </div>`;
+  function renderShareModal(scopes){
+    const isMulti = scopes.length > 1;
+    const landingTab = scopes.find(s=>s!=='document');
 
-    const previewTabAttr = scope!=='document' ? ` data-preview-tab="${scope}"` : '';
+    const pillsHtml = scopeOptions().map(o=>{
+      const selected = scopes.includes(o.value);
+      return `<button class="pill-btn ${selected?'selected':''}" data-pill="${o.value}">${escapeHtml(o.label)}</button>`;
+    }).join('');
 
-    const inheritedHtml = inherited.map(g=>`
-      <div class="person-row">
-        <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
-        <div class="person-info">
-          <div class="person-name">${escapeHtml(g.name)}</div>
-          <div class="person-email">${escapeHtml(g.email)}</div>
-        </div>
-        <span class="role-static">${g.role} · Entire document</span>
-        <button class="icon-btn sm" data-preview="${g.email}"${previewTabAttr} aria-label="Preview ${escapeAttr(g.name)}'s view">${icon('visibility',18)}</button>
-      </div>`).join('');
+    let peopleSectionHtml;
+    if(!isMulti){
+      const scope = scopes[0];
+      const grants = grantsForScope(scope);
+      const inherited = scope!=='document' ? grantsForScope('document') : [];
+      const previewTabAttr = scope!=='document' ? ` data-preview-tab="${scope}"` : '';
 
-    const grantsHtml = grants.map(g=>`
-      <div class="person-row">
-        <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
-        <div class="person-info">
-          <div class="person-name">${escapeHtml(g.name)}</div>
-          <div class="person-email">${escapeHtml(g.email)}</div>
-        </div>
-        <select class="md-select role-select" data-grant-id="${g.id}">
-          <option ${g.role==='Viewer'?'selected':''}>Viewer</option>
-          <option ${g.role==='Commenter'?'selected':''}>Commenter</option>
-          <option ${g.role==='Editor'?'selected':''}>Editor</option>
-        </select>
-        <button class="icon-btn sm" data-preview="${g.email}"${previewTabAttr} aria-label="Preview ${escapeAttr(g.name)}'s view">${icon('visibility',18)}</button>
-        <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
-      </div>`).join('');
-
-    el.modal.innerHTML = `
-      <div class="modal-head">
-        <h3>Share "${escapeHtml(DOC_TITLE)}"</h3>
-        <div class="modal-head-actions">
-          <button class="icon-btn" aria-label="Help">${icon('help')}</button>
-          <button class="icon-btn" aria-label="Sharing settings">${icon('settings')}</button>
-          <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
-        </div>
-      </div>
-      <div class="modal-body">
-        <div class="scope-row">
-          <label for="scopeSelect">Tab</label>
-          <select class="md-select" id="scopeSelect">
-            ${scopeOptions().map(o=>`<option value="${o.value}" ${o.value===scope?'selected':''}>${escapeHtml(o.label)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="field-row">
-          <div class="text-field">
-            <input type="email" id="addPersonInput" placeholder=" " />
-            <label>Add people, groups, spaces, and calendar events</label>
+      const ownerRow = `
+        <div class="person-row">
+          <div class="avatar" style="background:${colorFor(OWNER.email)}">${initials(OWNER.name)}</div>
+          <div class="person-info">
+            <div class="person-name">${escapeHtml(OWNER.name)} (you)</div>
+            <div class="person-email">${escapeHtml(OWNER.email)}</div>
           </div>
-          <button class="btn btn-filled" id="addPersonBtn">Add</button>
-        </div>
+          <span class="role-static">Owner</span>
+        </div>`;
+
+      const inheritedHtml = inherited.map(g=>`
+        <div class="person-row">
+          <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
+          <div class="person-info">
+            <div class="person-name">${escapeHtml(g.name)}</div>
+            <div class="person-email">${escapeHtml(g.email)}</div>
+          </div>
+          <span class="role-static">${g.role} · Entire document</span>
+          <button class="icon-btn sm" data-preview="${g.email}"${previewTabAttr} aria-label="Preview ${escapeAttr(g.name)}'s view">${icon('visibility',18)}</button>
+        </div>`).join('');
+
+      const grantsHtml = grants.map(g=>`
+        <div class="person-row">
+          <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
+          <div class="person-info">
+            <div class="person-name">${escapeHtml(g.name)}</div>
+            <div class="person-email">${escapeHtml(g.email)}</div>
+          </div>
+          <select class="md-select role-select" data-grant-id="${g.id}">
+            <option ${g.role==='Viewer'?'selected':''}>Viewer</option>
+            <option ${g.role==='Commenter'?'selected':''}>Commenter</option>
+            <option ${g.role==='Editor'?'selected':''}>Editor</option>
+          </select>
+          <button class="icon-btn sm" data-preview="${g.email}"${previewTabAttr} aria-label="Preview ${escapeAttr(g.name)}'s view">${icon('visibility',18)}</button>
+          <button class="icon-btn sm person-remove" data-remove-grant="${g.id}" aria-label="Remove">${icon('close',18)}</button>
+        </div>`).join('');
+
+      peopleSectionHtml = `
         <div class="section-head">People with access</div>
         <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${grantsHtml}</div>
+      `;
+    } else {
+      const people = buildUnionPeople(scopes);
+      const peopleHtml = people.map(p=>{
+        const tags = p.entries.map(e=>`<span class="person-tag">${escapeHtml(e.label)} · ${e.role}</span>`).join('');
+        return `
+        <div class="person-row">
+          <div class="avatar" style="background:${colorFor(p.email)}">${initials(p.name)}</div>
+          <div class="person-info">
+            <div class="person-name">${escapeHtml(p.name)}</div>
+            <div class="person-email">${escapeHtml(p.email)}</div>
+          </div>
+          <button class="icon-btn sm" data-preview="${p.email}" data-preview-tab="${p.entries[0].scope}" aria-label="Preview ${escapeAttr(p.name)}'s view">${icon('visibility',18)}</button>
+          <button class="icon-btn sm" data-remove-union="${p.email}" aria-label="Remove">${icon('close',18)}</button>
+          <div class="person-tags">${tags}</div>
+        </div>`;
+      }).join('') || `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has access to these tabs yet.</p>`;
+
+      peopleSectionHtml = `
+        <div class="section-head">People with access to these tabs</div>
+        <div class="people-list" id="peopleList">${peopleHtml}</div>
+      `;
+    }
+
+    const generalAccessHtml = (()=>{
+      if(isMulti) return '';
+      const scope = scopes[0];
+      const ga = state.generalAccess[scope];
+      const linkOn = ga.mode === 'anyone';
+      const previewTabAttr = scope!=='document' ? ` data-preview-tab="${scope}"` : '';
+      return `
         <div class="divider"></div>
         <div class="section-head">General access</div>
         <div class="access-block">
@@ -1379,38 +1412,95 @@
           </select>
           ${linkOn ? `<button class="icon-btn sm" data-preview="__public__"${previewTabAttr} aria-label="Preview public link view">${icon('visibility',18)}</button>` : ''}
         </div>
+      `;
+    })();
+
+    const footerHtml = isMulti
+      ? `<div></div><button class="btn btn-filled" id="doneBtn">Done</button>`
+      : `<button class="btn btn-outlined-primary" id="copyLinkBtn">${icon('link',18)} Copy link</button><button class="btn btn-filled" id="doneBtn">Done</button>`;
+
+    el.modal.innerHTML = `
+      <div class="modal-head">
+        <h3>Share "${escapeHtml(DOC_TITLE)}"</h3>
+        <div class="modal-head-actions">
+          <button class="icon-btn" aria-label="Help">${icon('help')}</button>
+          <button class="icon-btn" aria-label="Sharing settings">${icon('settings')}</button>
+          <button class="icon-btn modal-close" id="modalCloseBtn" aria-label="Close">${icon('close')}</button>
+        </div>
       </div>
-      <div class="modal-foot">
-        <button class="btn btn-outlined-primary" id="copyLinkBtn">${icon('link',18)} Copy link</button>
-        <button class="btn btn-filled" id="doneBtn">Done</button>
+      <div class="modal-body">
+        <div class="pill-label">Tab</div>
+        <div class="pill-row" id="scopePills">${pillsHtml}</div>
+        <div class="field-row">
+          <div class="text-field">
+            <input type="email" id="addPersonInput" placeholder=" " />
+            <label>Add people, groups, spaces, and calendar events</label>
+          </div>
+          <select class="md-select role-select-inline" id="addRoleSelect">
+            <option selected>Viewer</option>
+            <option>Commenter</option>
+            <option>Editor</option>
+          </select>
+          <button class="btn btn-filled" id="addPersonBtn">Add</button>
+        </div>
+        ${peopleSectionHtml}
+        ${generalAccessHtml}
       </div>
+      <div class="modal-foot">${footerHtml}</div>
     `;
 
     document.getElementById('modalCloseBtn').onclick = closeModal;
     document.getElementById('doneBtn').onclick = closeModal;
-    document.getElementById('scopeSelect').onchange = (e)=> renderShareModal(e.target.value);
-    document.getElementById('addPersonBtn').onclick = ()=> addGrant(scope);
-    document.getElementById('addPersonInput').addEventListener('keydown', e=>{
-      if(e.key === 'Enter'){ e.preventDefault(); addGrant(scope); }
+    el.modal.querySelectorAll('[data-pill]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const val = btn.dataset.pill;
+        let next;
+        if(val === 'document'){
+          next = ['document'];
+        } else if(scopes.includes('document')){
+          next = [val];
+        } else if(scopes.includes(val)){
+          next = scopes.filter(s=>s!==val);
+          if(next.length === 0) next = [val];
+        } else {
+          next = [...scopes, val];
+        }
+        renderShareModal(next);
+      };
     });
-    document.getElementById('generalAccessSelect').onchange = (e)=>{
-      state.generalAccess[scope].mode = e.target.value;
-      renderShareModal(scope);
+    document.getElementById('addPersonBtn').onclick = ()=> addGrant(scopes);
+    document.getElementById('addPersonInput').addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){ e.preventDefault(); addGrant(scopes); }
+    });
+    document.getElementById('generalAccessSelect')?.addEventListener('change', (e)=>{
+      state.generalAccess[scopes[0]].mode = e.target.value;
+      renderShareModal(scopes);
       renderTabs();
-    };
-    document.getElementById('generalRoleSelect').onchange = (e)=>{
-      state.generalAccess[scope].role = e.target.value;
-      renderShareModal(scope);
-    };
-    document.getElementById('copyLinkBtn').onclick = ()=>{
+    });
+    document.getElementById('generalRoleSelect')?.addEventListener('change', (e)=>{
+      state.generalAccess[scopes[0]].role = e.target.value;
+      renderShareModal(scopes);
+    });
+    document.getElementById('copyLinkBtn')?.addEventListener('click', ()=>{
+      const scope = scopes[0];
       const url = scope==='document' ? 'https://docs.example/d/8f3k2q' : `https://docs.example/d/8f3k2q/tab/${scope}`;
       copyToClipboard(url);
       showToast('Link copied.');
-    };
+    });
     el.modal.querySelectorAll('[data-remove-grant]').forEach(btn=>{
       btn.onclick = ()=>{
         state.grants = state.grants.filter(g=>g.id!==btn.dataset.removeGrant);
-        renderShareModal(scope);
+        renderShareModal(scopes);
+        renderTabs();
+      };
+    });
+    el.modal.querySelectorAll('[data-remove-union]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const email = btn.dataset.removeUnion;
+        const idsToRemove = new Set();
+        scopes.forEach(scope=> grantsForScope(scope).filter(g=>g.email===email).forEach(g=>idsToRemove.add(g.id)));
+        state.grants = state.grants.filter(g=>!idsToRemove.has(g.id));
+        renderShareModal(scopes);
         renderTabs();
       };
     });
@@ -1419,10 +1509,9 @@
         const g = state.grants.find(g=>g.id===sel.dataset.grantId);
         if(g){
           g.role = sel.value;
-          const preferredTab = scope!=='document' ? scope : undefined;
-          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scope)}".`, 'Preview', ()=>{
+          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scopes[0])}".`, 'Preview', ()=>{
             closeModal();
-            goToRecipientView(g.email, preferredTab);
+            goToRecipientView(g.email, landingTab);
           });
         }
       };
@@ -1437,25 +1526,27 @@
     });
   }
 
-  function addGrant(scope){
+  function addGrant(scopes){
     const input = document.getElementById('addPersonInput');
+    const roleSelect = document.getElementById('addRoleSelect');
     const val = input.value.trim();
     if(!val) return;
     if(!validEmail(val)){ showToast('Enter a valid email address.'); return; }
-    if(grantsForScope(scope).some(g=>g.email.toLowerCase()===val.toLowerCase())){
-      showToast('Already has access to this scope.');
-      input.value = '';
-      return;
-    }
+    const role = roleSelect.value;
     const name = deriveName(val);
-    state.grants.push({id:'grant-'+Math.random().toString(36).slice(2,8), email:val, name, scope, role:'Viewer'});
+    scopes.forEach(scope=>{
+      const existing = state.grants.find(g=>g.email.toLowerCase()===val.toLowerCase() && g.scope===scope);
+      if(existing) existing.role = role;
+      else state.grants.push({id:'grant-'+Math.random().toString(36).slice(2,8), email:val, name, scope, role});
+    });
     input.value = '';
-    renderShareModal(scope);
+    renderShareModal(scopes);
     renderTabs();
-    const preferredTab = scope!=='document' ? scope : undefined;
-    showToast(`${name} was given access to "${scopeLabel(scope)}".`, 'Preview', ()=>{
+    const landingTab = scopes.find(s=>s!=='document');
+    const label = scopes.length === 1 ? `"${scopeLabel(scopes[0])}"` : `${scopes.length} tabs`;
+    showToast(`${name} was given ${role.toLowerCase()} access to ${label}.`, 'Preview', ()=>{
       closeModal();
-      goToRecipientView(val, preferredTab);
+      goToRecipientView(val, landingTab);
     });
   }
 
