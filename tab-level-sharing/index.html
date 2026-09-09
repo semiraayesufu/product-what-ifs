@@ -232,7 +232,6 @@
 
   /* menu popover */
   .popover{ position:absolute; z-index:40; min-width:200px; background:var(--surface-container-high); border-radius:var(--radius-sm); box-shadow:var(--shadow-2); padding:8px; }
-  #tabSelectMenu{ z-index:150; max-height:260px; overflow-y:auto; }
   .popover-item{ display:flex; align-items:center; gap:12px; width:100%; text-align:left; padding:10px 12px; border-radius:6px; background:none; border:none; cursor:pointer; font-size:13.5px; color:var(--text); }
   .popover-item:hover{ background:color-mix(in srgb, var(--text) 8%, transparent); }
   .popover-item.danger{ color:var(--error); }
@@ -308,18 +307,23 @@
   .modal-head-actions{ display:flex; gap:2px; margin-top:-6px; }
   .modal-body{ padding:16px 24px; overflow-y:auto; }
   .pill-label{ font-size:12.5px; color:var(--text-secondary); font-weight:500; margin-bottom:8px; }
-  .tab-select{
-    position:relative; display:flex; align-items:center; flex-wrap:wrap; gap:6px;
-    border:1px solid var(--border); border-radius:var(--radius-xs); padding:6px 34px 6px 8px;
-    cursor:pointer; min-height:40px; margin-bottom:18px;
+  .tab-select-trigger{
+    display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border-strong); background:var(--surface);
+    color:var(--text); border-radius:var(--radius-full); padding:9px 12px 9px 16px; font-size:13.5px; cursor:pointer; margin-bottom:18px;
   }
-  .tab-select:hover{ border-color:var(--border-strong); }
-  .tab-select-pills{ display:flex; flex-wrap:wrap; gap:6px; flex:1 1 auto; }
-  .tab-select-pill{ display:inline-flex; align-items:center; gap:2px; background:var(--primary-soft); color:var(--on-primary-soft); border-radius:999px; padding:4px 4px 4px 12px; font-size:12.5px; }
-  .tab-select-pill-x{ background:none; border:none; color:inherit; cursor:pointer; display:flex; padding:3px; border-radius:50%; }
-  .tab-select-pill-x:hover{ background:color-mix(in srgb, currentColor 18%, transparent); }
-  .tab-select-toggle{ position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; display:flex; padding:4px; }
-  .tab-option-check{ width:18px; display:inline-flex; align-items:center; justify-content:center; color:var(--primary); flex-shrink:0; }
+  .tab-select-trigger:hover{ background:color-mix(in srgb, var(--text) 5%, transparent); }
+  .tab-select-trigger .material-symbols-outlined{ font-size:18px; color:var(--text-secondary); }
+  .tab-select-badge{ background:var(--text); color:var(--surface); border-radius:50%; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+  #tabSelectMenu{ z-index:150; width:280px; padding:6px; }
+  .tab-search{ display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:2px; border-bottom:1px solid var(--border); }
+  .tab-search .material-symbols-outlined{ color:var(--text-tertiary); font-size:18px; flex-shrink:0; }
+  .tab-search input{ border:none; background:none; outline:none; font-size:13.5px; color:var(--text); flex:1 1 auto; min-width:0; }
+  .tab-check-list{ max-height:240px; overflow-y:auto; padding-top:4px; }
+  .tab-check-row{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:6px; cursor:pointer; font-size:13.5px; width:100%; text-align:left; background:none; border:none; color:var(--text); }
+  .tab-check-row:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); }
+  .tab-checkbox{ width:18px; height:18px; border-radius:4px; border:1.5px solid var(--border-strong); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:transparent; }
+  .tab-checkbox.checked{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
+  .tab-select-empty{ font-size:12.5px; color:var(--text-tertiary); padding:10px; }
   .text-field{ position:relative; flex:1 1 auto; min-width:0; }
   .text-field input{ width:100%; height:52px; border:1px solid var(--border); border-radius:var(--radius-xs); padding:0 14px; background:transparent; color:var(--text); min-width:0; }
   .text-field label{ position:absolute; left:11px; top:-8px; background:var(--surface-container-high); padding:0 5px; font-size:11.5px; color:var(--text-secondary); }
@@ -1319,13 +1323,28 @@
 
   function closeTabSelectMenu(){ document.getElementById('tabSelectMenu')?.remove(); }
 
-  function renderTabSelectMenuItems(scopes){
+  function tabCheckRowHtml(o, checked){
+    return `<button type="button" class="tab-check-row" data-tab-option="${o.value}">
+      <span class="tab-checkbox ${checked?'checked':''}">${checked?icon('check',13):''}</span>${escapeHtml(o.label)}
+    </button>`;
+  }
+
+  function renderTabSelectMenuBody(scopes, query){
     const pop = document.getElementById('tabSelectMenu');
     if(!pop) return;
-    pop.innerHTML = scopeOptions().map(o=>{
-      const selected = scopes.includes(o.value);
-      return `<button class="popover-item" data-tab-option="${o.value}"><span class="tab-option-check">${selected ? icon('check',16) : ''}</span>${escapeHtml(o.label)}</button>`;
-    }).join('');
+    const all = scopeOptions();
+    const selectedOpts = all.filter(o=>scopes.includes(o.value));
+    const q = query.trim().toLowerCase();
+    const filtered = q ? all.filter(o=>o.label.toLowerCase().includes(q)) : all;
+
+    pop.innerHTML = `
+      <div class="tab-search">${icon('search',18)}<input type="text" id="tabSearchInput" placeholder="Search tabs…" value="${escapeAttr(query)}" /></div>
+      <div class="tab-check-list">
+        ${selectedOpts.length ? selectedOpts.map(o=>tabCheckRowHtml(o,true)).join('') + '<div class="popover-divider"></div>' : ''}
+        ${filtered.length ? filtered.map(o=>tabCheckRowHtml(o, scopes.includes(o.value))).join('') : `<div class="tab-select-empty">No tabs found.</div>`}
+      </div>
+    `;
+
     pop.querySelectorAll('[data-tab-option]').forEach(btn=>{
       btn.onclick = (e)=>{
         e.stopPropagation();
@@ -1336,9 +1355,12 @@
         else if(scopes.includes(val)){ next = scopes.filter(s=>s!==val); if(next.length===0) next=[val]; }
         else next = [...scopes, val];
         renderShareModal(next);
-        renderTabSelectMenuItems(next);
+        renderTabSelectMenuBody(next, document.getElementById('tabSearchInput') ? document.getElementById('tabSearchInput').value : '');
       };
     });
+    const searchInput = document.getElementById('tabSearchInput');
+    searchInput.oninput = ()=> renderTabSelectMenuBody(scopes, searchInput.value);
+    if(query){ searchInput.focus(); searchInput.setSelectionRange(query.length, query.length); }
   }
 
   function openTabSelectMenu(scopes){
@@ -1348,11 +1370,10 @@
     const pop = document.createElement('div');
     pop.className = 'popover';
     pop.id = 'tabSelectMenu';
-    pop.style.minWidth = Math.max(200, rect.width) + 'px';
     document.body.appendChild(pop);
     pop.style.top = (rect.bottom + window.scrollY + 4) + 'px';
     pop.style.left = (rect.left + window.scrollX) + 'px';
-    renderTabSelectMenuItems(scopes);
+    renderTabSelectMenuBody(scopes, '');
   }
 
   document.addEventListener('click', (e)=>{
@@ -1363,11 +1384,6 @@
 
   function renderShareModal(scopes){
     const isMulti = scopes.length > 1;
-
-    const pillsHtml = scopes.map(s=>{
-      const label = s==='document' ? 'Entire document' : scopeLabel(s);
-      return `<span class="tab-select-pill">${escapeHtml(label)}<button type="button" class="tab-select-pill-x" data-remove-pill="${s}" aria-label="Remove ${escapeAttr(label)}">${icon('close',14)}</button></span>`;
-    }).join('');
 
     let peopleSectionHtml;
     if(!isMulti){
@@ -1476,11 +1492,11 @@
         </div>
       </div>
       <div class="modal-body">
-        <div class="pill-label">Tab</div>
-        <div class="tab-select" id="tabSelectBox">
-          <div class="tab-select-pills">${pillsHtml}</div>
-          <button type="button" class="tab-select-toggle" id="tabSelectToggle" aria-label="Choose tabs">${icon('arrow_drop_down')}</button>
-        </div>
+        <button type="button" class="tab-select-trigger" id="tabSelectBox">
+          <span>Tab</span>
+          <span class="tab-select-badge">${scopes.length}</span>
+          ${icon('arrow_drop_down')}
+        </button>
         <div class="field-row">
           <div class="text-field">
             <input type="email" id="addPersonInput" placeholder=" " />
@@ -1502,19 +1518,9 @@
     document.getElementById('modalCloseBtn').onclick = ()=>{ closeTabSelectMenu(); closeModal(); };
     document.getElementById('doneBtn').onclick = ()=>{ closeTabSelectMenu(); closeModal(); };
     document.getElementById('tabSelectBox').addEventListener('click', (e)=>{
-      if(e.target.closest('.tab-select-pill-x')) return;
       e.stopPropagation();
       if(document.getElementById('tabSelectMenu')) closeTabSelectMenu();
       else openTabSelectMenu(scopes);
-    });
-    el.modal.querySelectorAll('[data-remove-pill]').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const val = btn.dataset.removePill;
-        let next = scopes.filter(s=>s!==val);
-        if(next.length === 0) next = ['document'];
-        renderShareModal(next);
-      });
     });
     document.getElementById('addPersonBtn').onclick = ()=> addGrant(scopes);
     document.getElementById('addPersonInput').addEventListener('keydown', e=>{
