@@ -1328,20 +1328,27 @@
     const pop = document.getElementById('tabSelectMenu');
     if(!pop) return;
     const all = scopeOptions();
-    const selectedOpts = all.filter(o=>scopes.includes(o.value));
+    const docOption = all[0];
+    const tabOpts = all.slice(1);
     const q = query.trim().toLowerCase();
-    const filtered = q ? all.filter(o=>o.label.toLowerCase().includes(q)) : all;
-    const docOption = filtered.find(o=>o.value==='document');
-    const tabOptions = filtered.filter(o=>o.value!=='document');
-    const fullListHtml = filtered.length
-      ? `${docOption ? tabCheckRowHtml(docOption, scopes.includes('document')) : ''}${docOption && tabOptions.length ? '<div class="popover-divider"></div>' : ''}${tabOptions.map(o=>tabCheckRowHtml(o, scopes.includes(o.value))).join('')}`
-      : `<div class="tab-select-empty">No tabs found.</div>`;
+    const filteredTabs = q ? tabOpts.filter(o=>o.label.toLowerCase().includes(q)) : tabOpts;
+    const pinnedTabOpts = tabOpts.filter(o=>scopes.includes(o.value));
+
+    const docRowHtml = tabCheckRowHtml(docOption, scopes.includes('document'));
+    const pinnedHtml = pinnedTabOpts.length
+      ? pinnedTabOpts.map(o=>tabCheckRowHtml(o,true)).join('') + '<div class="popover-divider"></div>'
+      : '';
+    const listHtml = filteredTabs.length
+      ? filteredTabs.map(o=>tabCheckRowHtml(o, scopes.includes(o.value))).join('')
+      : (q ? `<div class="tab-select-empty">No tabs found.</div>` : '');
 
     pop.innerHTML = `
       <div class="tab-search">${icon('search',18)}<input type="text" id="tabSearchInput" placeholder="Search tabs…" value="${escapeAttr(query)}" /></div>
       <div class="tab-check-list">
-        ${selectedOpts.length ? selectedOpts.map(o=>tabCheckRowHtml(o,true)).join('') + '<div class="popover-divider"></div>' : ''}
-        ${fullListHtml}
+        ${docRowHtml}
+        <div class="popover-divider"></div>
+        ${pinnedHtml}
+        ${listHtml}
       </div>
     `;
 
