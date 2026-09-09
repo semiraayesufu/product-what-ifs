@@ -103,11 +103,10 @@
   .recipient-doc-title{ font-size:13px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .recipient-spacer{ flex:1 1 auto; }
   .recipient-person{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); flex-shrink:0; }
-  .recipient-tabswitch{ display:flex; gap:8px; padding:14px 24px 0; flex-wrap:wrap; background:var(--surface-container); flex-shrink:0; }
-  .recipient-tabswitch button{ border:1px solid var(--border); background:var(--surface); color:var(--text-secondary); border-radius:var(--radius-full); padding:8px 16px; font-size:13px; cursor:pointer; }
-  .recipient-tabswitch button:hover{ background:color-mix(in srgb, var(--text) 5%, transparent); }
-  .recipient-tabswitch button.active{ background:var(--primary-soft); color:var(--on-primary-soft); border-color:transparent; font-weight:500; }
   .recipient-noaccess{ padding:80px 24px; text-align:center; color:var(--text-secondary); font-size:14px; }
+  #recipientBody[hidden]{ display:none; }
+  #recipientCanvasWrap{ display:contents; }
+  #recipientRail .tab-row{ cursor:pointer; }
   #recipientToolbarWrap .menu-row{ padding-left:20px; }
 
   /* ===== Icon button ===== */
@@ -523,15 +522,20 @@
 <div id="recipientView" hidden>
   <div class="recipient-shell">
     <header class="recipient-topbar" id="recipientHeader"></header>
-    <div class="recipient-tabswitch" id="recipientTabSwitch" style="display:none;"></div>
     <div id="recipientToolbarWrap"></div>
-    <div id="recipientCanvasWrap">
-      <main class="canvas">
-        <div class="doc-with-margin">
-          <article class="page" id="recipientPage"></article>
-          <div class="comment-margin" id="recipientCommentMargin"></div>
-        </div>
-      </main>
+    <div class="body" id="recipientBody">
+      <nav class="rail" id="recipientRail">
+        <div class="rail-header"><span>Tabs</span></div>
+        <ul class="tab-list" id="recipientTabList"></ul>
+      </nav>
+      <div id="recipientCanvasWrap">
+        <main class="canvas">
+          <div class="doc-with-margin">
+            <article class="page" id="recipientPage"></article>
+            <div class="comment-margin" id="recipientCommentMargin"></div>
+          </div>
+        </main>
+      </div>
     </div>
     <div class="recipient-noaccess" id="recipientNoAccess" hidden>
       This person doesn't currently have access to any tab in this document.
@@ -1189,6 +1193,7 @@
       : (personsList().find(p=>p.email===email) || {name: deriveName(email), email});
     const header = document.getElementById('recipientHeader');
     header.innerHTML = `
+      <button class="icon-btn menu-btn" id="recipientRailToggle" aria-label="Toggle tabs panel">${icon('menu',20)}</button>
       <button class="recipient-back" id="recipientBackBtn">${icon('arrow_back',18)} Back to document</button>
       <span class="recipient-badge">Prototype preview</span>
       <div class="recipient-doc-meta"><span class="recipient-doc-title">${escapeHtml(DOC_TITLE)}</span></div>
@@ -1199,23 +1204,30 @@
       </div>
     `;
     document.getElementById('recipientBackBtn').onclick = ()=>{ location.hash = ''; applyRoute(); };
+    document.getElementById('recipientRailToggle').onclick = ()=> document.getElementById('recipientRail').classList.toggle('rail-open');
   }
 
   function renderRecipientTabSwitch(email){
     const vis = visibleTabsFor(email);
-    const container = document.getElementById('recipientTabSwitch');
-    if(vis.length <= 1){ container.innerHTML = ''; container.style.display = 'none'; return; }
-    container.style.display = 'flex';
-    container.innerHTML = vis.map(id=>{
-      const t = getTab(id);
-      const active = id === state.recipientActiveTabId;
-      return `<button class="${active?'active':''}" data-recipient-tab="${id}">${escapeHtml(t.name)}</button>`;
+    const visSet = new Set(vis);
+    const ordered = state.tabs.filter(t=>visSet.has(t.id));
+    const list = document.getElementById('recipientTabList');
+    list.innerHTML = ordered.map(tab=>{
+      const active = tab.id === state.recipientActiveTabId;
+      const isSubtab = tab.parentId && visSet.has(tab.parentId);
+      const leading = tab.emoji ? `<span class="tab-emoji">${tab.emoji}</span>` : '';
+      return `
+      <li class="tab-row ${active?'active':''} ${isSubtab?'is-subtab':''}" data-recipient-tab="${tab.id}">
+        ${leading}
+        <span class="tab-name">${escapeHtml(tab.name)}</span>
+      </li>`;
     }).join('');
-    container.querySelectorAll('[data-recipient-tab]').forEach(btn=>{
-      btn.onclick = ()=>{
-        state.recipientActiveTabId = btn.dataset.recipientTab;
+    list.querySelectorAll('[data-recipient-tab]').forEach(row=>{
+      row.onclick = ()=>{
+        state.recipientActiveTabId = row.dataset.recipientTab;
         renderRecipientTabSwitch(email);
         renderRecipientPage();
+        document.getElementById('recipientRail').classList.remove('rail-open');
       };
     });
   }
@@ -1232,18 +1244,16 @@
     state.previewAs = email;
     const vis = visibleTabsFor(email);
     const noAccessEl = document.getElementById('recipientNoAccess');
-    const canvasEl = document.getElementById('recipientCanvasWrap');
-    const switchEl = document.getElementById('recipientTabSwitch');
+    const bodyEl = document.getElementById('recipientBody');
     renderRecipientHeader(email);
     if(!vis.length){
       noAccessEl.hidden = false;
-      canvasEl.hidden = true;
-      switchEl.style.display = 'none';
+      bodyEl.hidden = true;
       document.getElementById('recipientToolbarWrap').innerHTML = '';
       return;
     }
     noAccessEl.hidden = true;
-    canvasEl.hidden = false;
+    bodyEl.hidden = false;
     if(preferredTab && vis.includes(preferredTab)) state.recipientActiveTabId = preferredTab;
     else if(!state.recipientActiveTabId || !vis.includes(state.recipientActiveTabId)) state.recipientActiveTabId = vis[0];
     renderRecipientTabSwitch(email);
