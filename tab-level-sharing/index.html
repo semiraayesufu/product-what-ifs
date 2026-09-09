@@ -320,6 +320,7 @@
   .tab-search input{ border:none; background:none; outline:none; font-size:13.5px; color:var(--text); flex:1 1 auto; min-width:0; }
   .tab-check-list{ max-height:240px; overflow-y:auto; padding-top:4px; }
   .tab-check-row{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:6px; cursor:pointer; font-size:13.5px; width:100%; text-align:left; background:none; border:none; color:var(--text); }
+  .tab-option-icon{ display:inline-flex; color:var(--primary); flex-shrink:0; }
   .tab-check-row:hover{ background:color-mix(in srgb, var(--text) 6%, transparent); }
   .tab-checkbox{ width:18px; height:18px; border-radius:4px; border:1.5px solid var(--border-strong); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:transparent; }
   .tab-checkbox.checked{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
@@ -339,9 +340,11 @@
   .person-name{ font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .person-email{ font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .role-select{ font-size:12.5px; padding:6px 26px 6px 10px; }
+  .role-select, .role-select-inline{ background:var(--surface); border:1px solid var(--border-strong); }
+  .role-select:focus, .role-select-inline:focus{ border-color:var(--primary); outline:none; }
   .role-static{ font-size:12.5px; color:var(--text-secondary); padding:6px 8px; }
   .person-remove{ color:var(--text-secondary); }
-  .person-scope-tag{ font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .people-group-label{ font-size:11px; font-weight:700; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; padding:10px 2px 4px; }
   .divider{ height:1px; background:var(--border); margin:16px 0; }
   .access-block{ display:flex; align-items:center; gap:14px; }
   .access-icon{ width:40px; height:40px; border-radius:50%; background:var(--surface-container); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text-secondary); }
@@ -1313,8 +1316,11 @@
   function closeTabSelectMenu(){ document.getElementById('tabSelectMenu')?.remove(); }
 
   function tabCheckRowHtml(o, checked){
+    const isDoc = o.value === 'document';
+    const docIcon = isDoc ? `<span class="tab-option-icon">${icon('description',16)}</span>` : '';
+    const label = isDoc ? `<strong>${escapeHtml(o.label)}</strong>` : escapeHtml(o.label);
     return `<button type="button" class="tab-check-row" data-tab-option="${o.value}">
-      <span class="tab-checkbox ${checked?'checked':''}">${checked?icon('check',13):''}</span>${escapeHtml(o.label)}
+      <span class="tab-checkbox ${checked?'checked':''}">${checked?icon('check',13):''}</span>${docIcon}${label}
     </button>`;
   }
 
@@ -1398,14 +1404,12 @@
     }
 
     function grantRowHtml(g, scope){
-      const scopeTag = scope ? `<div class="person-scope-tag">${escapeHtml(scopeLabel(scope))}</div>` : '';
       return `
       <div class="person-row">
         <div class="avatar" style="background:${colorFor(g.email)}">${initials(g.name)}</div>
         <div class="person-info">
           <div class="person-name">${escapeHtml(g.name)}</div>
           <div class="person-email">${escapeHtml(g.email)}</div>
-          ${scopeTag}
         </div>
         <select class="md-select role-select" data-grant-id="${g.id}" data-grant-scope="${scope||''}">
           <option ${g.role==='Viewer'?'selected':''}>Viewer</option>
@@ -1431,13 +1435,18 @@
     } else {
       const inherited = grantsForScope('document');
       const inheritedHtml = inherited.map(inheritedRowHtml).join('');
-      const tabGrantsHtml = effScopes.map(scope=> grantsForScope(scope).map(g=>grantRowHtml(g, scope)).join('')).join('');
-      const emptyHtml = (!inherited.length && !tabGrantsHtml)
+      const tabGroupsHtml = effScopes.map(scope=>{
+        const grants = grantsForScope(scope);
+        if(!grants.length) return '';
+        return `<div class="people-group-label">${escapeHtml(scopeLabel(scope))}</div>${grants.map(g=>grantRowHtml(g, scope)).join('')}`;
+      }).join('');
+      const anyTabGrants = effScopes.some(scope=> grantsForScope(scope).length);
+      const emptyHtml = (!inherited.length && !anyTabGrants)
         ? `<p style="color:var(--text-secondary); font-size:13px; margin:4px 0 8px;">No one has access to these tabs yet.</p>` : '';
 
       peopleSectionHtml = `
         <div class="section-head">People with access</div>
-        <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${tabGrantsHtml}${emptyHtml}</div>
+        <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${tabGroupsHtml}${emptyHtml}</div>
       `;
     }
 
@@ -1634,7 +1643,11 @@
   function commitRename(id, value){
     const tab = getTab(id);
     if(!tab) return;
-    const clean = value.trim();
+    let clean = value.trim();
+    if(clean.toLowerCase() === 'entire document'){
+      showToast(`Tabs can't be named "Entire document" — that name is reserved for sharing the whole document.`);
+      clean = '';
+    }
     tab.name = clean || tab.name;
     tab.content.title = tab.name;
     tab.renaming = false;
