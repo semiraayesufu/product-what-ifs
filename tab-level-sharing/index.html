@@ -1350,9 +1350,9 @@
         e.stopPropagation();
         const val = btn.dataset.tabOption;
         let next;
-        if(val === 'document') next = ['document'];
+        if(val === 'document') next = scopes.includes('document') ? [] : ['document'];
         else if(scopes.includes('document')) next = [val];
-        else if(scopes.includes(val)){ next = scopes.filter(s=>s!==val); if(next.length===0) next=[val]; }
+        else if(scopes.includes(val)){ next = scopes.filter(s=>s!==val); }
         else next = [...scopes, val];
         renderShareModal(next);
         renderTabSelectMenuBody(next, document.getElementById('tabSearchInput') ? document.getElementById('tabSearchInput').value : '');
@@ -1383,11 +1383,12 @@
   });
 
   function renderShareModal(scopes){
-    const isMulti = scopes.length > 1;
+    const effScopes = scopes.length ? scopes : ['document'];
+    const isMulti = effScopes.length > 1;
 
     let peopleSectionHtml;
     if(!isMulti){
-      const scope = scopes[0];
+      const scope = effScopes[0];
       const grants = grantsForScope(scope);
       const inherited = scope!=='document' ? grantsForScope('document') : [];
 
@@ -1431,7 +1432,7 @@
         <div class="people-list" id="peopleList">${ownerRow}${inheritedHtml}${grantsHtml}</div>
       `;
     } else {
-      const people = buildUnionPeople(scopes);
+      const people = buildUnionPeople(effScopes);
       const peopleHtml = people.map(p=>{
         const tags = p.entries.map(e=>`<span class="person-tag">${escapeHtml(e.label)} · ${e.role}</span>`).join('');
         return `
@@ -1454,7 +1455,7 @@
 
     const generalAccessHtml = (()=>{
       if(isMulti) return '';
-      const scope = scopes[0];
+      const scope = effScopes[0];
       const ga = state.generalAccess[scope];
       const linkOn = ga.mode === 'anyone';
       return `
@@ -1522,21 +1523,21 @@
       if(document.getElementById('tabSelectMenu')) closeTabSelectMenu();
       else openTabSelectMenu(scopes);
     });
-    document.getElementById('addPersonBtn').onclick = ()=> addGrant(scopes);
+    document.getElementById('addPersonBtn').onclick = ()=> addGrant(effScopes);
     document.getElementById('addPersonInput').addEventListener('keydown', e=>{
-      if(e.key === 'Enter'){ e.preventDefault(); addGrant(scopes); }
+      if(e.key === 'Enter'){ e.preventDefault(); addGrant(effScopes); }
     });
     document.getElementById('generalAccessSelect')?.addEventListener('change', (e)=>{
-      state.generalAccess[scopes[0]].mode = e.target.value;
+      state.generalAccess[effScopes[0]].mode = e.target.value;
       renderShareModal(scopes);
       renderTabs();
     });
     document.getElementById('generalRoleSelect')?.addEventListener('change', (e)=>{
-      state.generalAccess[scopes[0]].role = e.target.value;
+      state.generalAccess[effScopes[0]].role = e.target.value;
       renderShareModal(scopes);
     });
     document.getElementById('copyLinkBtn')?.addEventListener('click', ()=>{
-      const scope = scopes[0];
+      const scope = effScopes[0];
       const url = scope==='document' ? 'https://docs.example/d/8f3k2q' : `https://docs.example/d/8f3k2q/tab/${scope}`;
       copyToClipboard(url);
       showToast('Link copied.');
@@ -1552,7 +1553,7 @@
       btn.onclick = ()=>{
         const email = btn.dataset.removeUnion;
         const idsToRemove = new Set();
-        scopes.forEach(scope=> grantsForScope(scope).filter(g=>g.email===email).forEach(g=>idsToRemove.add(g.id)));
+        effScopes.forEach(scope=> grantsForScope(scope).filter(g=>g.email===email).forEach(g=>idsToRemove.add(g.id)));
         state.grants = state.grants.filter(g=>!idsToRemove.has(g.id));
         renderShareModal(scopes);
         renderTabs();
@@ -1563,8 +1564,8 @@
         const g = state.grants.find(g=>g.id===sel.dataset.grantId);
         if(g){
           g.role = sel.value;
-          const landingTab = scopes.find(s=>s!=='document');
-          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(scopes[0])}".`, 'Preview', ()=>{
+          const landingTab = effScopes.find(s=>s!=='document');
+          showToast(`${g.name} is now ${sel.value.toLowerCase()} on "${scopeLabel(effScopes[0])}".`, 'Preview', ()=>{
             closeModal();
             goToRecipientView(g.email, landingTab);
           });
