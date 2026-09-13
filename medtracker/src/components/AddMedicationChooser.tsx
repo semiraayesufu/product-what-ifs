@@ -1,6 +1,7 @@
 import closeIcon from "../assets/icons/close.svg";
 import searchIcon from "../assets/icons/search-sm.svg";
 import editIcon from "../assets/icons/edit.svg";
+import uploadIcon from "../assets/icons/upload.svg";
 import chevronRight from "../assets/icons/chevron-right.svg";
 
 const OPTIONS = [
@@ -12,7 +13,7 @@ const OPTIONS = [
   },
   {
     key: "upload" as const,
-    icon: null,
+    icon: uploadIcon,
     title: "Upload",
     description: "Upload an image or file containing your prescription",
   },
@@ -58,11 +59,7 @@ export default function AddMedicationChooser({
             className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-3"
           >
             <div className="flex size-8 shrink-0 items-center justify-center rounded-sm border border-[#e5e7eb] bg-[#f9fafb] shadow-xs">
-              {option.icon ? (
-                <img src={option.icon} alt="" className="size-3.5" />
-              ) : (
-                <span className="text-sm leading-none">📤</span>
-              )}
+              <img src={option.icon} alt="" className="size-3.5" />
             </div>
             <div className="flex flex-1 flex-col gap-1.5 text-left">
               <p className="text-sm font-medium text-slate-800">{option.title}</p>

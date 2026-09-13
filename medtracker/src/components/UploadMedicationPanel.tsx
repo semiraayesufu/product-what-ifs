@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import arrowLeft from "../assets/icons/arrow-left.svg";
 import closeIcon from "../assets/icons/close.svg";
+import uploadIcon from "../assets/icons/upload.svg";
 
 export default function UploadMedicationPanel({
   onBack,
@@ -46,7 +47,7 @@ export default function UploadMedicationPanel({
         onClick={() => inputRef.current?.click()}
         className="flex w-full flex-col items-center gap-3 rounded-base border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center"
       >
-        <span className="text-2xl leading-none">📤</span>
+        <img src={uploadIcon} alt="" className="size-6" />
         {fileName ? (
           <p className="text-sm font-medium text-slate-800">{fileName}</p>
         ) : (
