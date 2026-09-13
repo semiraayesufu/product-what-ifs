@@ -153,6 +153,30 @@ export default function InteractionCheckerScreen({
         />
       );
     }
+    if (log.length === 0) {
+      return (
+        <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-4 px-8 py-5">
+          <div className="flex size-[72px] items-center justify-center rounded-[36px] bg-teal-100">
+            <img src={plusIcon} alt="" className="size-6" />
+          </div>
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <p className="text-lg font-semibold text-slate-800">No checks yet</p>
+            <p className="w-[320px] text-[13px] text-slate-500">
+              Run a check whenever you add a new medication or allergy to see if it conflicts with
+              what's already in your profile.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setState("new")}
+            className="flex items-center gap-1.5 rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs"
+          >
+            <img src={plusIcon} alt="" className="size-4" />
+            <span className="text-sm font-semibold text-white">New check</span>
+          </button>
+        </div>
+      );
+    }
     return null;
   })();
 

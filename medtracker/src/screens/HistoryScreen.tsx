@@ -61,13 +61,18 @@ export default function HistoryScreen({
                 onClick={() => setSelectedId(entry.id)}
               />
             ))}
-            {filtered.length === 0 && (
+            {filtered.length === 0 && log.length > 0 && (
               <p className="text-sm text-slate-500">No history matches your search.</p>
+            )}
+            {log.length === 0 && (
+              <p className="text-sm text-slate-500">
+                Nothing here yet — decisions from the Interaction Checker will show up as history.
+              </p>
             )}
           </div>
         </div>
 
-        {selected && (
+        {selected ? (
           <ResultPanel
             data={selected.result}
             decision={selected.decision}
@@ -76,6 +81,12 @@ export default function HistoryScreen({
             onClose={() => setSelectedId(null)}
             onAddMedication={addMedication}
           />
+        ) : (
+          log.length > 0 && (
+            <div className="flex h-full min-w-0 flex-1 items-center justify-center px-8 py-5">
+              <p className="text-sm text-slate-500">Select an entry to see its details.</p>
+            </div>
+          )
         )}
       </div>
     </div>

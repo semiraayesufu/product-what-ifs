@@ -8,22 +8,40 @@ import MedicalConditionsScreen from "./screens/MedicalConditionsScreen";
 import InteractionCheckerScreen from "./screens/InteractionCheckerScreen";
 import HistoryScreen from "./screens/HistoryScreen";
 
-const SCREENS: Record<NavKey, React.ComponentType<{ onNavigate: (key: NavKey) => void }>> = {
-  home: DashboardScreen,
-  medications: MedicationsScreen,
-  allergies: AllergiesScreen,
-  conditions: MedicalConditionsScreen,
-  interactions: InteractionCheckerScreen,
-  history: HistoryScreen,
-};
-
 export default function App() {
   const [screen, setScreen] = useState<NavKey>("home");
-  const Screen = SCREENS[screen];
+  const [autoOpenAdd, setAutoOpenAdd] = useState(false);
 
-  return (
-    <AppStoreProvider>
-      <Screen onNavigate={setScreen} />
-    </AppStoreProvider>
-  );
+  function navigate(key: NavKey) {
+    setAutoOpenAdd(false);
+    setScreen(key);
+  }
+
+  function goAddMedication() {
+    setAutoOpenAdd(true);
+    setScreen("medications");
+  }
+
+  let content;
+  if (screen === "home") {
+    content = <DashboardScreen onNavigate={navigate} onAddMedication={goAddMedication} />;
+  } else if (screen === "medications") {
+    content = (
+      <MedicationsScreen
+        onNavigate={navigate}
+        autoOpenAdd={autoOpenAdd}
+        onAutoOpenAddHandled={() => setAutoOpenAdd(false)}
+      />
+    );
+  } else if (screen === "allergies") {
+    content = <AllergiesScreen onNavigate={navigate} />;
+  } else if (screen === "conditions") {
+    content = <MedicalConditionsScreen onNavigate={navigate} />;
+  } else if (screen === "interactions") {
+    content = <InteractionCheckerScreen onNavigate={navigate} />;
+  } else {
+    content = <HistoryScreen onNavigate={navigate} />;
+  }
+
+  return <AppStoreProvider>{content}</AppStoreProvider>;
 }
