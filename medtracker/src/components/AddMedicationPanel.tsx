@@ -25,7 +25,7 @@ export default function AddMedicationPanel({
           onClick={onBack}
           className="flex items-center gap-1.5 rounded-sm"
         >
-          <img src={arrowLeft} alt="" className="size-3.5" />
+          <img src={arrowLeft} alt="" className="size-4" />
           <span className="text-xs font-medium text-slate-600">Back</span>
         </button>
         <button type="button" onClick={onClose} className="rounded-sm">
