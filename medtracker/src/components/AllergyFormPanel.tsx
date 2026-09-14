@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import angleDown from "../assets/icons/chevron-down.svg";
 import { SEVERITY_OPTIONS } from "../data/profile";
@@ -7,11 +8,15 @@ import type { Allergy } from "../types";
 export default function AllergyFormPanel({
   mode,
   initial,
+  initialName,
+  onBack,
   onClose,
   onSave,
 }: {
   mode: "add" | "edit";
   initial?: Allergy;
+  initialName?: string;
+  onBack?: () => void;
   onClose: () => void;
   onSave: (values: {
     name: string;
@@ -19,7 +24,7 @@ export default function AllergyFormPanel({
     severity: string;
   }) => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
+  const [name, setName] = useState(initial?.name ?? initialName ?? "");
   const [reaction, setReaction] = useState(initial?.reactionName ?? "");
   const [severity, setSeverity] = useState(SEVERITY_OPTIONS[2]);
 
@@ -28,6 +33,7 @@ export default function AllergyFormPanel({
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-hidden px-8 py-5">
       <div className="flex w-full items-center gap-5">
+        {onBack && <BackButton onClick={onBack} />}
         <p className="flex-1 text-xl font-semibold text-slate-800">
           {mode === "add" ? "Add allergy" : "Edit allergy"}
         </p>

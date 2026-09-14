@@ -4,10 +4,14 @@ import SearchInput from "../components/SearchInput";
 import ListRow from "../components/ListRow";
 import AllergyDetailPanel from "../components/AllergyDetailPanel";
 import AllergyFormPanel from "../components/AllergyFormPanel";
+import AddAllergyChooser from "../components/AddAllergyChooser";
+import AllergySearchPanel from "../components/AllergySearchPanel";
 import EmptyState from "../components/EmptyState";
 import plusIcon from "../assets/icons/plus.svg";
 import shieldAlertIcon from "../assets/icons/shield-alert.svg";
 import { useAppStore, slugify } from "../store/AppStore";
+
+type Mode = "view" | "chooser" | "search" | "add" | "edit";
 
 export default function AllergiesScreen({
   onNavigate,
@@ -17,7 +21,18 @@ export default function AllergiesScreen({
   const { allergies, addAllergy, updateAllergy, removeAllergy } = useAppStore();
   const [listQuery, setListQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(allergies[0]?.id ?? null);
-  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [mode, setMode] = useState<Mode>("view");
+  const [prefillName, setPrefillName] = useState<string | undefined>(undefined);
+
+  function openChooser() {
+    setPrefillName(undefined);
+    setMode("chooser");
+  }
+
+  function closeAddFlow() {
+    setMode("view");
+    setPrefillName(undefined);
+  }
 
   const filtered = useMemo(
     () => allergies.filter((a) => a.name.toLowerCase().includes(listQuery.toLowerCase())),
@@ -36,7 +51,7 @@ export default function AllergiesScreen({
             <p className="flex-1 text-xl font-semibold text-[#1a1a1a]">Allergies</p>
             <button
               type="button"
-              onClick={() => setMode("add")}
+              onClick={openChooser}
               className="flex shrink-0 items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs"
             >
               <img src={plusIcon} alt="" className="size-4" />
@@ -62,10 +77,26 @@ export default function AllergiesScreen({
           </div>
         </div>
 
-        {mode === "add" ? (
+        {mode === "chooser" ? (
+          <AddAllergyChooser
+            onClose={closeAddFlow}
+            onSelect={(method) => setMode(method === "search" ? "search" : "add")}
+          />
+        ) : mode === "search" ? (
+          <AllergySearchPanel
+            onBack={() => setMode("chooser")}
+            onClose={closeAddFlow}
+            onSelect={(name) => {
+              setPrefillName(name);
+              setMode("add");
+            }}
+          />
+        ) : mode === "add" ? (
           <AllergyFormPanel
             mode="add"
-            onClose={() => setMode("view")}
+            initialName={prefillName}
+            onBack={() => setMode(prefillName ? "search" : "chooser")}
+            onClose={closeAddFlow}
             onSave={({ name, reactionName, severity }) => {
               addAllergy({
                 name,
@@ -74,7 +105,7 @@ export default function AllergiesScreen({
                 reactionSeverity: `${severity} reaction`,
               });
               setSelectedId(slugify(name));
-              setMode("view");
+              closeAddFlow();
             }}
           />
         ) : mode === "edit" && selected ? (
@@ -108,7 +139,7 @@ export default function AllergiesScreen({
               title="No allergies recorded"
               description="Add any known allergies so we can check new medications against them automatically, from day one."
               ctaLabel="Add your first allergy"
-              onCta={() => setMode("add")}
+              onCta={openChooser}
             />
           </div>
         ) : (
