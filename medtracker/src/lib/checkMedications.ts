@@ -52,10 +52,12 @@ export async function checkMedicationsAgainstProfile(
 
     const conflicts: ConflictItem[] = [];
     const displayNames: string[] = [];
+    let anyOffline = false;
 
     for (const { info } of infos) {
       if (!info) continue;
       displayNames.push(info.displayName);
+      if (info.source === "offline") anyOffline = true;
       for (const profName of otherProfileNames) {
         if (profName.trim().length < 4) continue;
         const needle = new RegExp(`\\b${escapeRegExp(profName.trim())}`, "i");
@@ -72,6 +74,9 @@ export async function checkMedicationsAgainstProfile(
     }
 
     const title = displayNames.join(", ") || items.join(", ");
+    const sourceLabel = anyOffline
+      ? "Source: openFDA drug label data (from bundled offline snapshot — live check unavailable)"
+      : "Source: openFDA drug label database (checked live)";
 
     if (conflicts.length > 0) {
       const worst = conflicts.reduce<Severity>(
@@ -83,7 +88,7 @@ export async function checkMedicationsAgainstProfile(
         result: {
           outcome: "found",
           title,
-          subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found — live from openFDA`,
+          subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found — ${anyOffline ? "from an offline FDA data snapshot" : "live from openFDA"}`,
           conflicts,
           addPromptName,
         },
@@ -97,7 +102,7 @@ export async function checkMedicationsAgainstProfile(
         title,
         subtitle: "No mention found in the current FDA label",
         checkedAgainst: checkedAgainstText,
-        source: "Source: openFDA drug label database (checked live)",
+        source: sourceLabel,
         addPromptName,
       },
     };
@@ -110,7 +115,7 @@ export async function checkMedicationsAgainstProfile(
         subtitle: "Couldn't complete the check",
         note:
           err instanceof DrugApiError
-            ? err.message
+            ? `${err.message} It isn't in our small offline fallback set either — try a common generic name (e.g. "ibuprofen" instead of a brand name).`
             : "Something went wrong reaching the live drug database. Please try again.",
       },
     };

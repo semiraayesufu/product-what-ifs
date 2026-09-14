@@ -1,4 +1,5 @@
 import type { Severity } from "../types";
+import fallbackData from "../data/drugSafetyFallback.json";
 
 const RXNAV_BASE = "https://rxnav.nlm.nih.gov/REST";
 const OPENFDA_BASE = "https://api.fda.gov/drug/label.json";
@@ -23,7 +24,7 @@ async function safeFetch(url: string, signal?: AbortSignal): Promise<Response> {
     res = await fetch(url, { signal });
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
-    throw new DrugApiError("Couldn't reach the live drug database — check your connection.");
+    throw new DrugApiError("Couldn't reach the live drug database.");
   }
   return res;
 }
@@ -70,6 +71,8 @@ export interface DrugSafetyInfo {
   brandNames: string[];
   genericName?: string;
   sections: LabelSection[];
+  /** Whether this came from a live openFDA call or the bundled offline snapshot. */
+  source: "live" | "offline";
 }
 
 function firstNonEmpty(arr?: string[]): string | undefined {
@@ -105,18 +108,35 @@ function parseLabel(queriedName: string, result: any): DrugSafetyInfo {
     brandNames,
     genericName,
     sections,
+    source: "live",
   };
 }
 
-/**
- * Live drug-safety lookup against the FDA's openFDA drug label API (no API key required).
- * Returns null when the API responded but has no label on file for this name — a real,
- * expected outcome for less common names, not an error.
- */
-export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): Promise<DrugSafetyInfo | null> {
-  const trimmed = name.trim().replace(/"/g, "");
-  if (!trimmed) return null;
+interface FallbackEntry extends DrugSafetyInfo {
+  aliases: string[];
+}
 
+const FALLBACK = fallbackData as unknown as Record<string, FallbackEntry>;
+
+/**
+ * A small set of ~90 common medications' real FDA label data, fetched once at
+ * build time and bundled with the app (see scripts/build-drug-fallback — the
+ * data itself is genuine openFDA output, not fabricated). Used when the live
+ * call can't complete — e.g. offline, or a hosting sandbox that blocks
+ * outbound requests — so the checker still works for common medications
+ * instead of just failing.
+ */
+function lookupBundledFallback(name: string): DrugSafetyInfo | null {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  const match =
+    FALLBACK[key] ?? Object.values(FALLBACK).find((entry) => entry.aliases.includes(key));
+  if (!match) return null;
+  const { aliases: _aliases, ...info } = match;
+  return { ...info, source: "offline" };
+}
+
+async function fetchFromLiveApi(trimmed: string, signal?: AbortSignal): Promise<DrugSafetyInfo | null> {
   const fields = ["generic_name", "brand_name", "substance_name"];
   for (const field of fields) {
     const query = `openfda.${field}:"${trimmed}"`;
@@ -127,9 +147,32 @@ export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): P
     const data = await res.json();
     const result = data?.results?.[0];
     if (!result) continue;
-    return parseLabel(name, result);
+    return parseLabel(trimmed, result);
   }
   return null;
+}
+
+/**
+ * Drug-safety lookup against the FDA's openFDA drug label API (no API key
+ * required), falling back to a bundled snapshot of real FDA data for common
+ * medications if the live call fails (e.g. offline, or blocked by a hosting
+ * sandbox's network policy). Returns null only when neither source has a
+ * label on file for this name — a real, expected outcome for less common
+ * names, not an error.
+ */
+export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): Promise<DrugSafetyInfo | null> {
+  const trimmed = name.trim().replace(/"/g, "");
+  if (!trimmed) return null;
+
+  try {
+    const live = await fetchFromLiveApi(trimmed, signal);
+    return live ?? lookupBundledFallback(trimmed);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") throw err;
+    const fallback = lookupBundledFallback(trimmed);
+    if (fallback) return fallback;
+    throw err;
+  }
 }
 
 export function excerptAround(text: string, needle: string, radius = 150): string {

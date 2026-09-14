@@ -75,7 +75,8 @@ export default function ConditionFormPanel({
                   <button
                     key={`${m.code}-${m.name}`}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       setName(m.name);
                       setShowSuggestions(false);
                     }}

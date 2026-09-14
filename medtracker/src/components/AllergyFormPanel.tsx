@@ -75,7 +75,8 @@ export default function AllergyFormPanel({
                   <button
                     key={s}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       setName(s);
                       setShowSuggestions(false);
                     }}

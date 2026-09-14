@@ -132,7 +132,8 @@ export default function ManualMedicationForm({
                   <button
                     key={s}
                     type="button"
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
                       setName(s);
                       setShowSuggestions(false);
                     }}
