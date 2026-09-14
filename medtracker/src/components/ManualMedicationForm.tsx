@@ -69,22 +69,24 @@ export default function ManualMedicationForm({
   onBack,
   onClose,
   onSave,
-  initialName,
+  initialValues,
+  submitLabel = "Add medication",
 }: {
   onBack: () => void;
   onClose: () => void;
   onSave: (values: ManualMedicationValues) => void;
-  initialName?: string;
+  initialValues?: Partial<ManualMedicationValues>;
+  submitLabel?: string;
 }) {
-  const [name, setName] = useState(initialName ?? "");
+  const [name, setName] = useState(initialValues?.name ?? "");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [status, setStatus] = useState("");
-  const [condition, setCondition] = useState("");
-  const [form, setForm] = useState("");
-  const [strength, setStrength] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [prescribedBy, setPrescribedBy] = useState("");
+  const [status, setStatus] = useState(initialValues?.status ?? "");
+  const [condition, setCondition] = useState(initialValues?.condition ?? "");
+  const [form, setForm] = useState(initialValues?.form ?? "");
+  const [strength, setStrength] = useState(initialValues?.strength ?? "");
+  const [quantity, setQuantity] = useState(initialValues?.quantity ?? "");
+  const [frequency, setFrequency] = useState(initialValues?.frequency ?? "");
+  const [prescribedBy, setPrescribedBy] = useState(initialValues?.prescribedBy ?? "");
 
   const { results: suggestions, loading: suggestionsLoading, offline } = useLiveDrugSearch(name);
 
@@ -100,9 +102,9 @@ export default function ManualMedicationForm({
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="text-xl font-semibold text-slate-800">Enter medication manually</p>
+        <p className="text-xl font-semibold text-slate-800">Add medication</p>
         <p className="text-xs text-slate-600">
-          Provide more details about the medication dose for better tracking
+          Search for it, or type the name and details yourself
         </p>
       </div>
 
@@ -117,7 +119,7 @@ export default function ManualMedicationForm({
             }}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-            placeholder="Enter medication name"
+            placeholder="Search or type a medication name"
             autoFocus
             className="w-full rounded-base border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-500 shadow-xs focus:outline-none"
           />
@@ -216,7 +218,7 @@ export default function ManualMedicationForm({
         }
         className="flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <span className="text-sm font-semibold text-white">Continue</span>
+        <span className="text-sm font-semibold text-white">{submitLabel}</span>
       </button>
     </div>
   );

@@ -2,31 +2,36 @@ import { useState } from "react";
 import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import angleDown from "../assets/icons/chevron-down.svg";
+import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 import { SEVERITY_OPTIONS } from "../data/profile";
-import type { Allergy } from "../types";
+
+export interface AllergyValues {
+  name: string;
+  reactionName: string;
+  severity: string;
+}
 
 export default function AllergyFormPanel({
   mode,
-  initial,
-  initialName,
+  initialValues,
   onBack,
   onClose,
   onSave,
+  submitLabel = "Add allergy",
 }: {
   mode: "add" | "edit";
-  initial?: Allergy;
-  initialName?: string;
+  initialValues?: Partial<AllergyValues>;
   onBack?: () => void;
   onClose: () => void;
-  onSave: (values: {
-    name: string;
-    reactionName: string;
-    severity: string;
-  }) => void;
+  onSave: (values: AllergyValues) => void;
+  submitLabel?: string;
 }) {
-  const [name, setName] = useState(initial?.name ?? initialName ?? "");
-  const [reaction, setReaction] = useState(initial?.reactionName ?? "");
-  const [severity, setSeverity] = useState(SEVERITY_OPTIONS[2]);
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [reaction, setReaction] = useState(initialValues?.reactionName ?? "");
+  const [severity, setSeverity] = useState(initialValues?.severity ?? SEVERITY_OPTIONS[2]);
+
+  const { results: suggestions, loading: suggestionsLoading, offline } = useLiveDrugSearch(name);
 
   const canSave = name.trim().length > 0;
 
@@ -47,15 +52,44 @@ export default function AllergyFormPanel({
       </div>
 
       <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto">
-        <div className="flex flex-col gap-1.5">
+        <div className="relative flex flex-col gap-1.5">
           <label className="text-sm font-medium text-[#101828]">Allergen</label>
           <input
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Search or type - e.g. Aspirin"
+            onChange={(e) => {
+              setName(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+            placeholder="Search or type a medication name"
             autoFocus
             className="w-full rounded-base border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-500 shadow-xs focus:outline-none"
           />
+          {showSuggestions && name.trim().length >= 2 && (suggestions.length > 0 || suggestionsLoading) && (
+            <div className="absolute top-[68px] z-10 flex w-full flex-col overflow-hidden rounded-base border border-slate-200 bg-white shadow-xs">
+              {suggestionsLoading && suggestions.length === 0 ? (
+                <p className="px-3.5 py-2.5 text-sm text-slate-500">Searching…</p>
+              ) : (
+                suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => {
+                      setName(s);
+                      setShowSuggestions(false);
+                    }}
+                    className="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {s}
+                  </button>
+                ))
+              )}
+              <p className="border-t border-slate-100 px-3.5 py-1.5 text-[10px] font-medium uppercase text-slate-400">
+                {offline ? "Offline — showing local matches" : "Live results — NIH RxNorm"}
+              </p>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-[#101828]">Reaction</label>
@@ -96,7 +130,7 @@ export default function AllergyFormPanel({
         onClick={() => onSave({ name, reactionName: reaction || "Not specified", severity })}
         className="flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <span className="text-sm font-semibold text-white">Save</span>
+        <span className="text-sm font-semibold text-white">{submitLabel}</span>
       </button>
     </div>
   );

@@ -20,6 +20,8 @@ export default function ResultPanel({
   onAddMedication,
   decision,
   onDecide,
+  onConfirm,
+  confirmLabel,
 }: {
   data: ResultData;
   onBack: () => void;
@@ -27,8 +29,11 @@ export default function ResultPanel({
   onAddMedication?: (name: string) => void;
   decision?: Decision;
   onDecide?: (decision: Decision) => void;
+  /** Persistent confirm action shown regardless of outcome — used by batch add-flows to finalize. */
+  onConfirm?: () => void;
+  confirmLabel?: string;
 }) {
-  const needsDecision = data.outcome === "found" || data.outcome === "unresolved";
+  const needsDecision = onDecide && (data.outcome === "found" || data.outcome === "unresolved");
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-hidden px-8 py-5">
       <div className="flex w-full items-start justify-between">
@@ -148,6 +153,16 @@ export default function ResultPanel({
           </div>
         )}
       </div>
+
+      {onConfirm && (
+        <button
+          type="button"
+          onClick={onConfirm}
+          className="flex w-full shrink-0 items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs"
+        >
+          <span className="text-sm font-semibold text-white">{confirmLabel ?? "Continue"}</span>
+        </button>
+      )}
     </div>
   );
 }

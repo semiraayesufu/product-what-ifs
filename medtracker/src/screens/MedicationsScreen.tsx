@@ -1,19 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar, { type NavKey } from "../components/Sidebar";
 import SearchInput from "../components/SearchInput";
 import MedicationRow from "../components/MedicationRow";
-import AddMedicationPanel from "../components/AddMedicationPanel";
 import AddMedicationChooser, { type AddMedicationMethod } from "../components/AddMedicationChooser";
 import UploadMedicationPanel from "../components/UploadMedicationPanel";
 import ManualMedicationForm, { type ManualMedicationValues } from "../components/ManualMedicationForm";
 import MedicationDetailPanel from "../components/MedicationDetailPanel";
+import StagingReviewPanel from "../components/StagingReviewPanel";
+import CheckingPanel from "../components/CheckingPanel";
+import ResultPanel from "../components/ResultPanel";
 import EmptyState from "../components/EmptyState";
 import plusIcon from "../assets/icons/plus.svg";
 import medicationsIcon from "../assets/icons/medications.svg";
-import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
+import { checkMedicationsAgainstProfile, type CheckOutcome } from "../lib/checkMedications";
 import { useAppStore } from "../store/AppStore";
 
-type AddMode = "closed" | "chooser" | AddMedicationMethod;
+type FlowStep = "closed" | "chooser" | "upload" | "entry" | "review" | "checking" | "result";
+
+function formatDosage(values: ManualMedicationValues): string {
+  const quantityStrength = [values.quantity, values.strength].filter(Boolean).join(" x ");
+  return [quantityStrength, values.form].filter(Boolean).join(" ");
+}
 
 export default function MedicationsScreen({
   onNavigate,
@@ -24,105 +31,213 @@ export default function MedicationsScreen({
   autoOpenAdd?: boolean;
   onAutoOpenAddHandled?: () => void;
 }) {
-  const { medications, addMedication, updateMedication, removeMedication } = useAppStore();
+  const { medications, allergies, conditions, addMedication, updateMedication, removeMedication, addLogEntry } =
+    useAppStore();
   const [listQuery, setListQuery] = useState("");
-  const [addMode, setAddMode] = useState<AddMode>("closed");
-  const [addQuery, setAddQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [flowStep, setFlowStep] = useState<FlowStep>("closed");
+  const [staged, setStaged] = useState<ManualMedicationValues[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [checkOutcome, setCheckOutcome] = useState<CheckOutcome | null>(null);
+  const pendingCheckRef = useRef<Promise<CheckOutcome> | null>(null);
 
   useEffect(() => {
     if (autoOpenAdd) {
-      setAddMode("chooser");
+      openChooser();
       onAutoOpenAddHandled?.();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenAdd, onAutoOpenAddHandled]);
 
   const filteredMedications = useMemo(
-    () =>
-      medications.filter((m) =>
-        m.name.toLowerCase().includes(listQuery.toLowerCase()),
-      ),
+    () => medications.filter((m) => m.name.toLowerCase().includes(listQuery.toLowerCase())),
     [medications, listQuery],
-  );
-
-  const existingNames = useMemo(() => medications.map((m) => m.name), [medications]);
-  const { results: matches, loading: matchesLoading, offline: matchesOffline } = useLiveDrugSearch(
-    addQuery,
-    existingNames,
   );
 
   const selected = medications.find((m) => m.id === selectedId) ?? null;
 
   function openChooser() {
-    setAddQuery("");
+    setStaged([]);
+    setEditingIndex(null);
     setUploadedFileName(null);
+    setCheckOutcome(null);
     setSelectedId(null);
-    setAddMode("chooser");
+    setFlowStep("chooser");
   }
 
   function closeAddFlow() {
-    setAddMode("closed");
+    setFlowStep("closed");
+    setStaged([]);
+    setEditingIndex(null);
     setUploadedFileName(null);
+    setCheckOutcome(null);
   }
 
-  function handleManualSave(values: ManualMedicationValues) {
-    const quantityStrength = [values.quantity, values.strength].filter(Boolean).join(" x ");
-    const dosage = [quantityStrength, values.form].filter(Boolean).join(" ");
-    addMedication(values.name, {
-      dosage: dosage || undefined,
-      frequency: values.frequency || undefined,
-      status: values.status || undefined,
-      condition: values.condition || undefined,
-      prescribedBy: values.prescribedBy || undefined,
+  function handleEntrySave(values: ManualMedicationValues) {
+    if (editingIndex !== null) {
+      setStaged((prev) => prev.map((v, i) => (i === editingIndex ? values : v)));
+    } else {
+      setStaged((prev) => [...prev, values]);
+    }
+    setEditingIndex(null);
+    setFlowStep("review");
+  }
+
+  function handleAddAnother() {
+    setEditingIndex(null);
+    setFlowStep("entry");
+  }
+
+  function handleEditStaged(index: number) {
+    setEditingIndex(index);
+    setFlowStep("entry");
+  }
+
+  function handleRemoveStaged(index: number) {
+    setStaged((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) setFlowStep("entry");
+      return next;
     });
+  }
+
+  function commitStaged() {
+    for (const values of staged) {
+      addMedication(values.name, {
+        dosage: formatDosage(values) || undefined,
+        frequency: values.frequency || undefined,
+        status: values.status || undefined,
+        condition: values.condition || undefined,
+        prescribedBy: values.prescribedBy || undefined,
+      });
+    }
+  }
+
+  function handleContinueToCheck() {
+    const items = staged.map((v) => v.name);
+    const profileNames = [
+      ...medications.map((m) => m.name),
+      ...allergies.map((a) => a.name),
+      ...conditions.map((c) => c.name),
+    ];
+    const checkedAgainstText = `${medications.length} medications, ${allergies.length} allergies, ${conditions.length} conditions`;
+    pendingCheckRef.current = checkMedicationsAgainstProfile(items, profileNames, checkedAgainstText);
+    setFlowStep("checking");
+  }
+
+  async function handleCheckingDone() {
+    const outcome = await (
+      pendingCheckRef.current ??
+      checkMedicationsAgainstProfile(
+        staged.map((v) => v.name),
+        [],
+        "",
+      )
+    );
+    pendingCheckRef.current = null;
+    setCheckOutcome(outcome);
+    setFlowStep("result");
+  }
+
+  function handleConfirmAdd() {
+    commitStaged();
+    if (checkOutcome) {
+      addLogEntry({
+        id: `check-${Date.now()}`,
+        title: checkOutcome.result.title,
+        timeLabel: "Just now",
+        severity: checkOutcome.severity,
+        summary: checkOutcome.result.subtitle,
+        result: checkOutcome.result,
+      });
+    }
     closeAddFlow();
   }
 
+  const stagedCount = staged.length;
+
   const addPanel = (() => {
-    if (addMode === "chooser") {
+    if (flowStep === "chooser") {
       return (
         <AddMedicationChooser
           onClose={closeAddFlow}
-          onSelect={(method) => setAddMode(method)}
+          onSelect={(method: AddMedicationMethod) =>
+            setFlowStep(method === "upload" ? "upload" : "entry")
+          }
         />
       );
     }
-    if (addMode === "search") {
-      return (
-        <AddMedicationPanel
-          query={addQuery}
-          onQueryChange={setAddQuery}
-          matches={matches}
-          loading={matchesLoading}
-          offline={matchesOffline}
-          onBack={() => setAddMode("chooser")}
-          onClose={closeAddFlow}
-          onSelect={(name) => {
-            addMedication(name);
-            closeAddFlow();
-          }}
-        />
-      );
-    }
-    if (addMode === "upload") {
+    if (flowStep === "upload") {
       return (
         <UploadMedicationPanel
-          onBack={() => setAddMode("chooser")}
+          onBack={() => setFlowStep("chooser")}
           onClose={closeAddFlow}
           onContinue={(fileName) => {
             setUploadedFileName(fileName);
-            setAddMode("manual");
+            setFlowStep("entry");
           }}
         />
       );
     }
-    if (addMode === "manual") {
+    if (flowStep === "entry") {
+      const editingValues = editingIndex !== null ? staged[editingIndex] : undefined;
       return (
         <ManualMedicationForm
-          onBack={() => setAddMode(uploadedFileName ? "upload" : "chooser")}
+          onBack={() =>
+            setFlowStep(stagedCount > 0 ? "review" : uploadedFileName ? "upload" : "chooser")
+          }
           onClose={closeAddFlow}
-          onSave={handleManualSave}
+          onSave={handleEntrySave}
+          initialValues={editingValues}
+          submitLabel={editingIndex !== null ? "Save changes" : "Add medication"}
+        />
+      );
+    }
+    if (flowStep === "review") {
+      return (
+        <StagingReviewPanel
+          heading="Adding medications"
+          subtitle={`${stagedCount} medication${stagedCount === 1 ? "" : "s"} ready to check - add as many as you need before adding it to your profile`}
+          rows={staged.map((v) => ({
+            title: v.name,
+            subtitle: formatDosage(v) && v.frequency ? `${formatDosage(v)} — ${v.frequency}` : formatDosage(v) || v.frequency || "No dosage details",
+          }))}
+          onEdit={handleEditStaged}
+          onRemove={handleRemoveStaged}
+          note={{
+            label: "Why we wait to check",
+            body: "Checking multiple medications together catches conflicts between them, not just against what you already take.",
+          }}
+          addAnotherLabel="Add another medication"
+          onAddAnother={handleAddAnother}
+          continueLabel="Continue"
+          onContinue={handleContinueToCheck}
+          onBack={() => setFlowStep("entry")}
+          onClose={closeAddFlow}
+        />
+      );
+    }
+    if (flowStep === "checking") {
+      return (
+        <CheckingPanel
+          items={staged.map((v) => v.name)}
+          medicationCount={medications.length}
+          allergyCount={allergies.length}
+          conditionCount={conditions.length}
+          onDone={handleCheckingDone}
+        />
+      );
+    }
+    if (flowStep === "result" && checkOutcome) {
+      return (
+        <ResultPanel
+          data={checkOutcome.result}
+          onBack={() => setFlowStep("review")}
+          onClose={closeAddFlow}
+          onConfirm={handleConfirmAdd}
+          confirmLabel={`Add ${stagedCount} medication${stagedCount === 1 ? "" : "s"} to my profile`}
         />
       );
     }
@@ -134,7 +249,7 @@ export default function MedicationsScreen({
       <div className="flex min-h-0 flex-1 w-full items-start overflow-hidden border border-slate-200 bg-white">
         <Sidebar active="medications" onNavigate={onNavigate} />
 
-        {medications.length === 0 && addMode === "closed" && !selected ? (
+        {medications.length === 0 && flowStep === "closed" && !selected ? (
           <div className="flex h-full min-w-0 flex-1 flex-col gap-6 px-8 py-5">
             <div className="flex w-full items-center gap-5">
               <p className="flex-1 text-xl font-semibold text-[#1a1a1a]">Medications</p>
@@ -182,7 +297,7 @@ export default function MedicationsScreen({
                     active={medication.id === selectedId}
                     onClick={() => {
                       setSelectedId(medication.id);
-                      setAddMode("closed");
+                      setFlowStep("closed");
                     }}
                   />
                 ))}
@@ -196,9 +311,9 @@ export default function MedicationsScreen({
               </div>
             </div>
 
-            {addMode !== "closed" && addPanel}
+            {flowStep !== "closed" && addPanel}
 
-            {addMode === "closed" && selected && (
+            {flowStep === "closed" && selected && (
               <MedicationDetailPanel
                 medication={selected}
                 onSave={(patch) => updateMedication(selected.id, patch)}

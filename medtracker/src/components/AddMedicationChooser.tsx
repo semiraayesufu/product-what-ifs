@@ -1,16 +1,9 @@
 import closeIcon from "../assets/icons/close.svg";
-import searchIcon from "../assets/icons/search.svg";
 import editIcon from "../assets/icons/edit.svg";
 import uploadIcon from "../assets/icons/upload.svg";
 import chevronRight from "../assets/icons/chevron-right.svg";
 
 const OPTIONS = [
-  {
-    key: "search" as const,
-    icon: searchIcon,
-    title: "Search",
-    description: "Find it in our medication database",
-  },
   {
     key: "upload" as const,
     icon: uploadIcon,
@@ -18,14 +11,14 @@ const OPTIONS = [
     description: "Upload an image or file containing your prescription",
   },
   {
-    key: "manual" as const,
+    key: "entry" as const,
     icon: editIcon,
-    title: "Manual entry",
-    description: "Type in the name and details yourself",
+    title: "Enter medication",
+    description: "Search our medication database, or type in the details yourself",
   },
 ];
 
-export type AddMedicationMethod = "search" | "upload" | "manual";
+export type AddMedicationMethod = "upload" | "entry";
 
 export default function AddMedicationChooser({
   onClose,

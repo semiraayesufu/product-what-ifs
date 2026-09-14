@@ -2,27 +2,36 @@ import { useState } from "react";
 import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import angleDown from "../assets/icons/chevron-down.svg";
+import { useLiveConditionSearch } from "../hooks/useLiveConditionSearch";
 import { CONDITION_STATUS_OPTIONS } from "../data/profile";
-import type { Condition } from "../types";
+
+export interface ConditionValues {
+  name: string;
+  diagnosisDate: string;
+  status: string;
+}
 
 export default function ConditionFormPanel({
   mode,
-  initial,
-  initialName,
+  initialValues,
   onBack,
   onClose,
   onSave,
+  submitLabel = "Add condition",
 }: {
   mode: "add" | "edit";
-  initial?: Condition;
-  initialName?: string;
+  initialValues?: Partial<ConditionValues>;
   onBack?: () => void;
   onClose: () => void;
-  onSave: (values: { name: string; diagnosisDate: string; status: string }) => void;
+  onSave: (values: ConditionValues) => void;
+  submitLabel?: string;
 }) {
-  const [name, setName] = useState(initial?.name ?? initialName ?? "");
-  const [diagnosisDate, setDiagnosisDate] = useState("");
-  const [status, setStatus] = useState(CONDITION_STATUS_OPTIONS[0]);
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [diagnosisDate, setDiagnosisDate] = useState(initialValues?.diagnosisDate ?? "");
+  const [status, setStatus] = useState(initialValues?.status ?? CONDITION_STATUS_OPTIONS[0]);
+
+  const { results: suggestions, loading: suggestionsLoading, offline } = useLiveConditionSearch(name);
 
   const canSave = name.trim().length > 0;
 
@@ -43,15 +52,45 @@ export default function ConditionFormPanel({
       </div>
 
       <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto">
-        <div className="flex flex-col gap-1.5">
+        <div className="relative flex flex-col gap-1.5">
           <label className="text-sm font-medium text-[#101828]">Condition</label>
           <input
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
             placeholder="Search or type - e.g. Lupus"
             autoFocus
             className="w-full rounded-base border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-500 shadow-xs focus:outline-none"
           />
+          {showSuggestions && name.trim().length >= 2 && (suggestions.length > 0 || suggestionsLoading) && (
+            <div className="absolute top-[68px] z-10 flex w-full flex-col overflow-hidden rounded-base border border-slate-200 bg-white shadow-xs">
+              {suggestionsLoading && suggestions.length === 0 ? (
+                <p className="px-3.5 py-2.5 text-sm text-slate-500">Searching…</p>
+              ) : (
+                suggestions.map((m) => (
+                  <button
+                    key={`${m.code}-${m.name}`}
+                    type="button"
+                    onClick={() => {
+                      setName(m.name);
+                      setShowSuggestions(false);
+                    }}
+                    className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left hover:bg-slate-50"
+                  >
+                    <span className="text-sm text-slate-700">{m.name}</span>
+                    {m.code && <span className="shrink-0 text-xs text-slate-400">{m.code}</span>}
+                  </button>
+                ))
+              )}
+              <p className="border-t border-slate-100 px-3.5 py-1.5 text-[10px] font-medium uppercase text-slate-400">
+                {offline ? "Offline — showing local matches" : "Live results — NIH ICD-10-CM"}
+              </p>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-[#101828]">Diagnosis date (Optional)</label>
@@ -91,7 +130,7 @@ export default function ConditionFormPanel({
         onClick={() => onSave({ name, diagnosisDate, status })}
         className="flex w-full items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <span className="text-sm font-semibold text-white">Save</span>
+        <span className="text-sm font-semibold text-white">{submitLabel}</span>
       </button>
     </div>
   );
