@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import closeIcon from "../assets/icons/close.svg";
 import closeSmallIcon from "../assets/icons/close-14.svg";
 import searchIcon from "../assets/icons/search-lg.svg";
-import { MEDICATION_CATALOG } from "../data/profile";
+import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 
 export default function NewCheckPanel({
   onClose,
@@ -14,14 +14,10 @@ export default function NewCheckPanel({
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<string[]>([]);
 
-  const suggestions = useMemo(() => {
-    if (!query.trim()) return [];
-    return MEDICATION_CATALOG.filter(
-      (name) =>
-        name.toLowerCase().includes(query.toLowerCase()) &&
-        !items.some((item) => item.toLowerCase() === name.toLowerCase()),
-    ).slice(0, 5);
-  }, [query, items]);
+  const { results: suggestions, loading: suggestionsLoading, offline } = useLiveDrugSearch(
+    query,
+    items,
+  );
 
   function addItem(name: string) {
     const trimmed = name.trim();
@@ -68,18 +64,25 @@ export default function NewCheckPanel({
               className="w-full bg-transparent text-base text-slate-700 placeholder:text-slate-500 focus:outline-none"
             />
           </div>
-          {suggestions.length > 0 && (
+          {query.trim().length >= 2 && (suggestions.length > 0 || suggestionsLoading) && (
             <div className="absolute top-[52px] z-10 flex w-full flex-col overflow-hidden rounded-base border border-slate-200 bg-white shadow-xs">
-              {suggestions.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => addItem(name)}
-                  className="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  {name}
-                </button>
-              ))}
+              {suggestionsLoading && suggestions.length === 0 ? (
+                <p className="px-3.5 py-2.5 text-sm text-slate-500">Searching…</p>
+              ) : (
+                suggestions.slice(0, 5).map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => addItem(name)}
+                    className="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {name}
+                  </button>
+                ))
+              )}
+              <p className="border-t border-slate-100 px-3.5 py-1.5 text-[10px] font-medium uppercase text-slate-400">
+                {offline ? "Offline — showing local matches" : "Live results — NIH RxNorm"}
+              </p>
             </div>
           )}
         </div>

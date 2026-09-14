@@ -57,6 +57,8 @@ export interface ResultData {
   checkedAgainst?: string;
   source?: string;
   addPromptName?: string;
+  /** Overrides the default "not verified" copy for an unresolved outcome — e.g. offline vs. no label on file. */
+  note?: string;
 }
 
 export type Decision = "proceed" | "contact-provider" | "cancel";

@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import arrowLeft from "../assets/icons/arrow-left.svg";
 import closeIcon from "../assets/icons/close.svg";
 import angleDown from "../assets/icons/angle-down.svg";
+import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 import {
-  MEDICATION_CATALOG,
   MEDICATION_STATUS_OPTIONS,
   MEDICATION_FORM_OPTIONS,
   MEDICATION_STRENGTH_OPTIONS,
@@ -86,13 +86,7 @@ export default function ManualMedicationForm({
   const [frequency, setFrequency] = useState("");
   const [prescribedBy, setPrescribedBy] = useState("");
 
-  const suggestions = useMemo(() => {
-    if (!name.trim()) return [];
-    return MEDICATION_CATALOG.filter((c) => c.toLowerCase().includes(name.toLowerCase())).slice(
-      0,
-      5,
-    );
-  }, [name]);
+  const { results: suggestions, loading: suggestionsLoading, offline } = useLiveDrugSearch(name);
 
   const canContinue = name.trim().length > 0;
 
@@ -130,21 +124,28 @@ export default function ManualMedicationForm({
             autoFocus
             className="w-full rounded-base border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-500 shadow-xs focus:outline-none"
           />
-          {showSuggestions && suggestions.length > 0 && (
+          {showSuggestions && name.trim().length >= 2 && (suggestions.length > 0 || suggestionsLoading) && (
             <div className="absolute top-[68px] z-10 flex w-full flex-col overflow-hidden rounded-base border border-slate-200 bg-white shadow-xs">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => {
-                    setName(s);
-                    setShowSuggestions(false);
-                  }}
-                  className="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  {s}
-                </button>
-              ))}
+              {suggestionsLoading && suggestions.length === 0 ? (
+                <p className="px-3.5 py-2.5 text-sm text-slate-500">Searching…</p>
+              ) : (
+                suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => {
+                      setName(s);
+                      setShowSuggestions(false);
+                    }}
+                    className="w-full px-3.5 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    {s}
+                  </button>
+                ))
+              )}
+              <p className="border-t border-slate-100 px-3.5 py-1.5 text-[10px] font-medium uppercase text-slate-400">
+                {offline ? "Offline — showing local matches" : "Live results — NIH RxNorm"}
+              </p>
             </div>
           )}
         </div>

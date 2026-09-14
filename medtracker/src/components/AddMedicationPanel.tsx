@@ -6,6 +6,8 @@ export default function AddMedicationPanel({
   query,
   onQueryChange,
   matches,
+  loading,
+  offline,
   onBack,
   onClose,
   onSelect,
@@ -13,6 +15,8 @@ export default function AddMedicationPanel({
   query: string;
   onQueryChange: (value: string) => void;
   matches: string[];
+  loading?: boolean;
+  offline?: boolean;
   onBack: () => void;
   onClose: () => void;
   onSelect: (name: string) => void;
@@ -45,7 +49,14 @@ export default function AddMedicationPanel({
       </div>
 
       <div className="flex w-full flex-col gap-3">
-        <p className="text-[11px] font-semibold text-slate-600">MATCHES</p>
+        <div className="flex w-full items-center justify-between">
+          <p className="text-[11px] font-semibold text-slate-600">MATCHES</p>
+          {query.trim().length >= 2 && (
+            <p className="text-[10px] font-medium uppercase text-slate-400">
+              {offline ? "Offline — local matches" : "Live — NIH RxNorm"}
+            </p>
+          )}
+        </div>
         <div className="flex w-full flex-col gap-2">
           {matches.map((name) => (
             <button
@@ -57,7 +68,13 @@ export default function AddMedicationPanel({
               <p className="text-sm font-medium text-slate-800">{name}</p>
             </button>
           ))}
-          {matches.length === 0 && (
+          {matches.length === 0 && query.trim().length < 2 && (
+            <p className="text-sm text-slate-500">Start typing to search the live medication database.</p>
+          )}
+          {matches.length === 0 && query.trim().length >= 2 && loading && (
+            <p className="text-sm text-slate-500">Searching…</p>
+          )}
+          {matches.length === 0 && query.trim().length >= 2 && !loading && (
             <p className="text-sm text-slate-500">No matches found.</p>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Sidebar, { type NavKey } from "../components/Sidebar";
 import SearchInput from "../components/SearchInput";
 import RecentCheckRow from "../components/RecentCheckRow";
@@ -6,34 +6,19 @@ import NewCheckPanel from "../components/NewCheckPanel";
 import CheckingPanel from "../components/CheckingPanel";
 import ResultPanel from "../components/ResultPanel";
 import plusIcon from "../assets/icons/plus.svg";
-import { MEDICATION_CATALOG } from "../data/profile";
+import { fetchDrugSafetyInfo, excerptAround, DrugApiError } from "../services/drugApi";
 import { useAppStore } from "../store/AppStore";
-import type { Decision, LogEntry, ResultData } from "../types";
-
-const IBUPROFEN_RESULT: ResultData = {
-  outcome: "found",
-  title: "Ibuprofen",
-  subtitle: "2 interactions found against your saved profile",
-  conflicts: [
-    {
-      pair: "Ibuprofen + Prednisone",
-      severity: "moderate",
-      headline: "Increased risk of stomach bleeding and reduced kidney function",
-      detail:
-        "Taking these together raises the risk of GI bleeding and may worsen kidney strain, especially relevant given your lupus nephritis risk.",
-    },
-    {
-      pair: "Trimethoprim-Sulfamethoxazole + Prednisone",
-      severity: "minor",
-      headline: "NSAIDS carry added risk with lupus nephritis",
-      detail:
-        "This is a condition-based caution, not a drug-drug interaction — your rheumatologist may prefer an alternative pain reliever.",
-    },
-  ],
-  addPromptName: "Ibuprofen",
-};
+import type { ConflictItem, Decision, LogEntry, ResultData, Severity } from "../types";
 
 type CheckerState = "idle" | "new" | "checking" | "result";
+
+const SEVERITY_RANK: Record<Severity, number> = { major: 3, moderate: 2, minor: 1, unresolved: 0 };
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+type CheckOutcome = { result: ResultData; severity: LogEntry["severity"] };
 
 export default function InteractionCheckerScreen({
   onNavigate,
@@ -47,6 +32,7 @@ export default function InteractionCheckerScreen({
   const [selectedId, setSelectedId] = useState<string>(log[0]?.id ?? "");
   const [checkingItems, setCheckingItems] = useState<string[]>([]);
   const [pendingEntryId, setPendingEntryId] = useState<string | null>(null);
+  const pendingCheckRef = useRef<Promise<CheckOutcome> | null>(null);
 
   const filteredLog = useMemo(
     () => log.filter((entry) => entry.title.toLowerCase().includes(listQuery.toLowerCase())),
@@ -55,49 +41,119 @@ export default function InteractionCheckerScreen({
 
   const checkedAgainstText = `${medications.length} medications, ${allergies.length} allergies, ${conditions.length} conditions`;
 
-  function buildResult(items: string[]): { result: ResultData; severity: LogEntry["severity"] } {
-    const hasIbuprofen = items.some((item) => item.toLowerCase() === "ibuprofen");
-    if (hasIbuprofen) return { result: IBUPROFEN_RESULT, severity: "moderate" };
+  /**
+   * Fetches each item's real FDA label live (openFDA) and scans its interaction /
+   * warning / contraindication text for mentions of anything already in the
+   * patient's saved profile. This is a live, honest heuristic — a real pairwise
+   * drug-interaction database (e.g. DrugBank) isn't free/keyless, so we surface
+   * what the FDA's own label text says rather than a fabricated verdict.
+   */
+  async function performLiveCheck(items: string[]): Promise<CheckOutcome> {
+    const profileNames = [
+      ...medications.map((m) => m.name),
+      ...allergies.map((a) => a.name),
+      ...conditions.map((c) => c.name),
+    ].filter((n) => !items.some((item) => item.toLowerCase() === n.toLowerCase()));
 
-    const unresolvedItem = items.find(
-      (item) => !MEDICATION_CATALOG.some((c) => c.toLowerCase() === item.toLowerCase()),
-    );
-    if (unresolvedItem) {
+    try {
+      const infos = await Promise.all(
+        items.map(async (item) => ({ item, info: await fetchDrugSafetyInfo(item) })),
+      );
+
+      const unresolvedCount = infos.filter((x) => x.info === null).length;
+      if (unresolvedCount === items.length) {
+        return {
+          severity: "unresolved",
+          result: {
+            outcome: "unresolved",
+            title: items.join(", "),
+            subtitle: "No FDA label on file",
+            note: "openFDA doesn't have a published label under this exact name — try the generic name, or double-check the spelling.",
+            addPromptName: items[0],
+          },
+        };
+      }
+
+      const conflicts: ConflictItem[] = [];
+      const displayNames: string[] = [];
+
+      for (const { info } of infos) {
+        if (!info) continue;
+        displayNames.push(info.displayName);
+        for (const profName of profileNames) {
+          if (profName.trim().length < 4) continue;
+          const needle = new RegExp(`\\b${escapeRegExp(profName.trim())}`, "i");
+          const hitSection = info.sections.find((s) => needle.test(s.text));
+          if (hitSection) {
+            conflicts.push({
+              pair: `${info.displayName} + ${profName}`,
+              severity: hitSection.severity,
+              headline: `${profName} is mentioned in this label's ${hitSection.label.toLowerCase()}`,
+              detail: excerptAround(hitSection.text, profName.trim()),
+            });
+          }
+        }
+      }
+
+      const newMedication = items.find(
+        (item) => !medications.some((m) => m.name.toLowerCase() === item.toLowerCase()),
+      );
+      const title = displayNames.join(", ") || items.join(", ");
+
+      if (conflicts.length > 0) {
+        const worst = conflicts.reduce<Severity>(
+          (acc, c) => (SEVERITY_RANK[c.severity] > SEVERITY_RANK[acc] ? c.severity : acc),
+          "unresolved",
+        );
+        return {
+          severity: worst,
+          result: {
+            outcome: "found",
+            title,
+            subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found — live from openFDA`,
+            conflicts,
+            addPromptName: newMedication,
+          },
+        };
+      }
+
+      return {
+        severity: "clear",
+        result: {
+          outcome: "clear",
+          title,
+          subtitle: "No mention found in the current FDA label",
+          checkedAgainst: checkedAgainstText,
+          source: "Source: openFDA drug label database (checked live)",
+          addPromptName: newMedication,
+        },
+      };
+    } catch (err) {
       return {
         severity: "unresolved",
         result: {
           outcome: "unresolved",
-          title: unresolvedItem,
-          subtitle: "Not verified against your profile",
-          addPromptName: unresolvedItem,
+          title: items.join(", "),
+          subtitle: "Couldn't complete the check",
+          note:
+            err instanceof DrugApiError
+              ? err.message
+              : "Something went wrong reaching the live drug database. Please try again.",
         },
       };
     }
-
-    const newMedication = items.find(
-      (item) => !medications.some((m) => m.name.toLowerCase() === item.toLowerCase()),
-    );
-
-    return {
-      severity: "clear",
-      result: {
-        outcome: "clear",
-        title: items.join(", "),
-        subtitle: "No documented interaction",
-        checkedAgainst: checkedAgainstText,
-        source: "Source: openFDA — checked Aug 20, 2026",
-        addPromptName: newMedication,
-      },
-    };
   }
 
   function handleSave(items: string[]) {
     setCheckingItems(items);
+    pendingCheckRef.current = performLiveCheck(items);
     setState("checking");
   }
 
-  function handleCheckingDone() {
-    const { result, severity } = buildResult(checkingItems);
+  async function handleCheckingDone() {
+    const outcome = await (pendingCheckRef.current ?? performLiveCheck(checkingItems));
+    pendingCheckRef.current = null;
+    const { result, severity } = outcome;
     const id = `check-${Date.now()}`;
     addLogEntry({
       id,

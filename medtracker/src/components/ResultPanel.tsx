@@ -88,7 +88,7 @@ export default function ResultPanel({
             <p className="text-[10px] font-bold text-slate-500">UNRESOLVED</p>
             <p className="text-sm font-bold text-slate-800">Not verified against your profile</p>
             <p className="text-xs text-slate-500">
-              We don't have documented interaction data for this item yet.
+              {data.note ?? "We don't have documented interaction data for this item yet."}
             </p>
           </div>
         )}

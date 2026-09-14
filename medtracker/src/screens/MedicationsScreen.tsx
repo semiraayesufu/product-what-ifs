@@ -9,7 +9,7 @@ import ManualMedicationForm, { type ManualMedicationValues } from "../components
 import MedicationDetailPanel from "../components/MedicationDetailPanel";
 import EmptyState from "../components/EmptyState";
 import plusIcon from "../assets/icons/plus.svg";
-import { MEDICATION_CATALOG } from "../data/profile";
+import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 import { useAppStore } from "../store/AppStore";
 
 type AddMode = "closed" | "chooser" | AddMedicationMethod;
@@ -45,14 +45,10 @@ export default function MedicationsScreen({
     [medications, listQuery],
   );
 
-  const matches = useMemo(
-    () =>
-      MEDICATION_CATALOG.filter(
-        (name) =>
-          name.toLowerCase().includes(addQuery.toLowerCase()) &&
-          !medications.some((m) => m.name.toLowerCase() === name.toLowerCase()),
-      ),
-    [addQuery, medications],
+  const existingNames = useMemo(() => medications.map((m) => m.name), [medications]);
+  const { results: matches, loading: matchesLoading, offline: matchesOffline } = useLiveDrugSearch(
+    addQuery,
+    existingNames,
   );
 
   const selected = medications.find((m) => m.id === selectedId) ?? null;
@@ -97,6 +93,8 @@ export default function MedicationsScreen({
           query={addQuery}
           onQueryChange={setAddQuery}
           matches={matches}
+          loading={matchesLoading}
+          offline={matchesOffline}
           onBack={() => setAddMode("chooser")}
           onClose={closeAddFlow}
           onSelect={(name) => {
