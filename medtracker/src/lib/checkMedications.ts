@@ -7,6 +7,30 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Real FDA "Drug Interactions" sections are often just a flat list of drug
+// names grouped by class, with no per-drug severity language — so every
+// match found there lands at the same section-based default (Moderate),
+// even when the actual text nearby says something much stronger or weaker.
+// Read the excerpt itself for real signal language and adjust from there,
+// instead of relying only on which section matched.
+const MAJOR_SIGNALS =
+  /\b(contraindicated|should not be (?:used|co-?administered)|do not use|avoid concomitant use|avoid combination|life-threatening|fatal|increased risk of death|black box)\b/i;
+const ELEVATED_SIGNALS = /\b(increased risk|serious|significantly increase|severe|major bleeding|toxicity)\b/i;
+const REDUCED_SIGNALS =
+  /\b(no significant interaction|not expected to be clinically significant|minor interaction|unlikely to be clinically significant|no dosage adjustment)\b/i;
+
+function refineSeverity(base: Severity, excerpt: string): Severity {
+  const text = excerpt.toLowerCase();
+  if (MAJOR_SIGNALS.test(text)) return "major";
+  if (REDUCED_SIGNALS.test(text)) {
+    if (base === "major") return "moderate";
+    if (base === "moderate") return "minor";
+    return base;
+  }
+  if (base === "minor" && ELEVATED_SIGNALS.test(text)) return "moderate";
+  return base;
+}
+
 export type CheckOutcome = { result: ResultData; severity: LogEntry["severity"] };
 
 /**
@@ -70,11 +94,12 @@ export async function checkMedicationsAgainstProfile(
         const needle = new RegExp(`\\b${escapeRegExp(profName.trim())}`, "i");
         const hitSection = info.sections.find((s) => needle.test(s.text));
         if (hitSection) {
+          const detail = excerptAround(hitSection.text, profName.trim());
           conflicts.push({
             pair: `${info.displayName} + ${profName}`,
-            severity: hitSection.severity,
+            severity: refineSeverity(hitSection.severity, detail),
             headline: `${profName} is mentioned in this label's ${hitSection.label.toLowerCase()}`,
-            detail: excerptAround(hitSection.text, profName.trim()),
+            detail,
           });
         }
       }
