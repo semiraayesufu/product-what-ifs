@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar, { type NavKey } from "../components/Sidebar";
 import SearchInput from "../components/SearchInput";
 import RecentCheckRow from "../components/RecentCheckRow";
@@ -9,12 +9,24 @@ import type { Decision } from "../types";
 
 export default function HistoryScreen({
   onNavigate,
+  autoSelectId,
+  onAutoSelectHandled,
 }: {
   onNavigate?: (key: NavKey) => void;
+  autoSelectId?: string | null;
+  onAutoSelectHandled?: () => void;
 }) {
   const { log, addMedication, decideLogEntry } = useAppStore();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(log[0]?.id ?? null);
+
+  useEffect(() => {
+    if (autoSelectId) {
+      setSelectedId(autoSelectId);
+      onAutoSelectHandled?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelectId, onAutoSelectHandled]);
 
   const filtered = useMemo(
     () => log.filter((entry) => entry.title.toLowerCase().includes(query.toLowerCase())),

@@ -24,9 +24,6 @@ export async function checkMedicationsAgainstProfile(
   /** When provided, the result offers to add the first checked item not already in this list. */
   existingMedicationNames?: string[],
 ): Promise<CheckOutcome> {
-  const otherProfileNames = profileNames.filter(
-    (n) => !items.some((item) => item.toLowerCase() === n.toLowerCase()),
-  );
   const addPromptName = existingMedicationNames
     ? items.find((item) => !existingMedicationNames.some((m) => m.toLowerCase() === item.toLowerCase()))
     : undefined;
@@ -54,11 +51,21 @@ export async function checkMedicationsAgainstProfile(
     const displayNames: string[] = [];
     let anyOffline = false;
 
-    for (const { info } of infos) {
+    for (const { item, info } of infos) {
       if (!info) continue;
       displayNames.push(info.displayName);
       if (info.source === "offline") anyOffline = true;
-      for (const profName of otherProfileNames) {
+
+      // Check against the existing profile, and against every OTHER item in
+      // this same batch — the whole point of checking multiple new
+      // medications together is catching conflicts between them, not just
+      // against what's already saved.
+      const namesToCheck = [
+        ...profileNames.filter((n) => !items.some((i) => i.toLowerCase() === n.toLowerCase())),
+        ...items.filter((i) => i.toLowerCase() !== item.toLowerCase()),
+      ];
+
+      for (const profName of namesToCheck) {
         if (profName.trim().length < 4) continue;
         const needle = new RegExp(`\\b${escapeRegExp(profName.trim())}`, "i");
         const hitSection = info.sections.find((s) => needle.test(s.text));

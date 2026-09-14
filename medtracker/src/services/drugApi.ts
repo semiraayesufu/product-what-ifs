@@ -136,18 +136,49 @@ function lookupBundledFallback(name: string): DrugSafetyInfo | null {
   return { ...info, source: "offline" };
 }
 
+/**
+ * openFDA text search matches substrings, so searching "lisinopril" can return
+ * a combination product like "Lisinopril and Hydrochlorothiazide" ahead of
+ * plain lisinopril. Prefer a result whose generic_name is a single ingredient
+ * that actually matches the query, falling back progressively rather than
+ * blindly taking whatever comes back first.
+ */
+function pickBestResult(results: any[], queried: string, field: string): any | null {
+  const q = queried.trim().toUpperCase();
+  const qFirstWord = q.split(/\s+/)[0];
+  const buckets: any[][] = [[], [], [], []]; // exact, startsWith, containsWord, anySingle
+
+  for (const r of results) {
+    const names: string[] | undefined = r?.openfda?.[field];
+    if (!names || names.length !== 1) continue;
+    const name = names[0];
+    if (/ AND | WITH |\/|,/.test(name)) continue;
+    buckets[3].push(r);
+    if (name === q) buckets[0].push(r);
+    else if (name.startsWith(qFirstWord)) buckets[1].push(r);
+    else if (name.split(/\s+/).includes(qFirstWord)) buckets[2].push(r);
+  }
+
+  for (const bucket of buckets) {
+    if (bucket.length > 0) return bucket[0];
+  }
+  return results[0] ?? null;
+}
+
 async function fetchFromLiveApi(trimmed: string, signal?: AbortSignal): Promise<DrugSafetyInfo | null> {
   const fields = ["generic_name", "brand_name", "substance_name"];
   for (const field of fields) {
     const query = `openfda.${field}:"${trimmed}"`;
-    const url = `${OPENFDA_BASE}?search=${encodeURIComponent(query)}&limit=1`;
+    const url = `${OPENFDA_BASE}?search=${encodeURIComponent(query)}&limit=15`;
     const res = await safeFetch(url, signal);
     if (res.status === 404) continue;
     if (!res.ok) throw new DrugApiError(`openFDA lookup failed (${res.status})`);
     const data = await res.json();
-    const result = data?.results?.[0];
-    if (!result) continue;
-    return parseLabel(trimmed, result);
+    const results = data?.results;
+    if (!results || results.length === 0) continue;
+    const best = pickBestResult(results, trimmed, field === "substance_name" ? "generic_name" : field);
+    if (!best) continue;
+    return parseLabel(trimmed, best);
   }
   return null;
 }

@@ -11,9 +11,11 @@ import HistoryScreen from "./screens/HistoryScreen";
 export default function App() {
   const [screen, setScreen] = useState<NavKey>("home");
   const [autoOpenAdd, setAutoOpenAdd] = useState(false);
+  const [autoSelectLogId, setAutoSelectLogId] = useState<string | null>(null);
 
   function navigate(key: NavKey) {
     setAutoOpenAdd(false);
+    setAutoSelectLogId(null);
     setScreen(key);
   }
 
@@ -22,9 +24,20 @@ export default function App() {
     setScreen("medications");
   }
 
+  function goToHistoryEntry(id: string) {
+    setAutoSelectLogId(id);
+    setScreen("history");
+  }
+
   let content;
   if (screen === "home") {
-    content = <DashboardScreen onNavigate={navigate} onAddMedication={goAddMedication} />;
+    content = (
+      <DashboardScreen
+        onNavigate={navigate}
+        onAddMedication={goAddMedication}
+        onViewHistoryEntry={goToHistoryEntry}
+      />
+    );
   } else if (screen === "medications") {
     content = (
       <MedicationsScreen
@@ -40,7 +53,13 @@ export default function App() {
   } else if (screen === "interactions") {
     content = <InteractionCheckerScreen onNavigate={navigate} />;
   } else {
-    content = <HistoryScreen onNavigate={navigate} />;
+    content = (
+      <HistoryScreen
+        onNavigate={navigate}
+        autoSelectId={autoSelectLogId}
+        onAutoSelectHandled={() => setAutoSelectLogId(null)}
+      />
+    );
   }
 
   return <AppStoreProvider>{content}</AppStoreProvider>;

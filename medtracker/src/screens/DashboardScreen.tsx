@@ -6,16 +6,20 @@ import { useAppStore } from "../store/AppStore";
 export default function DashboardScreen({
   onNavigate,
   onAddMedication,
+  onViewHistoryEntry,
 }: {
   onNavigate?: (key: NavKey) => void;
   onAddMedication?: () => void;
+  onViewHistoryEntry?: (id: string) => void;
 }) {
   const { medications, allergies, conditions, log } = useAppStore();
 
   const isEmpty =
     medications.length === 0 && allergies.length === 0 && conditions.length === 0 && log.length === 0;
 
-  const needsAttention = log.filter((entry) => !entry.decision);
+  const needsAttention = log.filter(
+    (entry) => !entry.decision && (entry.result.outcome === "found" || entry.result.outcome === "unresolved"),
+  );
   const recentActivity = log.slice(0, 6);
 
   return (
@@ -83,7 +87,7 @@ export default function DashboardScreen({
                     <button
                       key={entry.id}
                       type="button"
-                      onClick={() => onNavigate?.("history")}
+                      onClick={() => onViewHistoryEntry?.(entry.id)}
                       className="flex w-full flex-col gap-1 rounded-lg border border-slate-200 p-3 text-left"
                     >
                       <div className="flex w-full items-start gap-2">
@@ -108,7 +112,7 @@ export default function DashboardScreen({
                     <button
                       key={entry.id}
                       type="button"
-                      onClick={() => onNavigate?.("history")}
+                      onClick={() => onViewHistoryEntry?.(entry.id)}
                       className={`flex w-full items-center gap-2.5 rounded-lg p-3 text-left ${
                         entry.severity === "unresolved" ? "bg-orange-50" : "bg-[#fef2f2]"
                       }`}

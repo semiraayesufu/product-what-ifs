@@ -280,7 +280,8 @@ export default function MedicationsScreen({
                 <button
                   type="button"
                   onClick={openChooser}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs"
+                  disabled={flowStep !== "closed"}
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <img src={plusIcon} alt="" className="size-4" />
                   <span className="text-sm font-semibold text-white">Add medication</span>
@@ -296,8 +297,8 @@ export default function MedicationsScreen({
                     medication={medication}
                     active={medication.id === selectedId}
                     onClick={() => {
+                      if (flowStep !== "closed") return;
                       setSelectedId(medication.id);
-                      setFlowStep("closed");
                     }}
                   />
                 ))}
