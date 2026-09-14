@@ -1,5 +1,3 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="arrow-left">
-<path id="Vector" fill-rule="evenodd" clip-rule="evenodd" d="M5.66248 4.25419C5.89028 4.48199 5.89028 4.85134 5.66248 5.07915L4.32496 6.41667H11.0833C11.4055 6.41667 11.6667 6.67783 11.6667 7C11.6667 7.32217 11.4055 7.58333 11.0833 7.58333H4.32496L5.66248 8.92085C5.89028 9.14866 5.89028 9.51801 5.66248 9.74581C5.43467 9.97362 5.06533 9.97362 4.83752 9.74581L2.50419 7.41248C2.27638 7.18467 2.27638 6.81533 2.50419 6.58752L4.83752 4.25419C5.06533 4.02638 5.43467 4.02638 5.66248 4.25419Z" fill="#4A5565"/>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#45556C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /> <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /> <rect x="6" y="14" width="12" height="8" rx="1" />
 </svg>

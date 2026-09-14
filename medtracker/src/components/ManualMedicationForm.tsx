@@ -1,7 +1,7 @@
 import { useState } from "react";
-import arrowLeft from "../assets/icons/arrow-left.svg";
+import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
-import angleDown from "../assets/icons/angle-down.svg";
+import angleDown from "../assets/icons/chevron-down.svg";
 import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 import {
   MEDICATION_STATUS_OPTIONS,
@@ -93,10 +93,7 @@ export default function ManualMedicationForm({
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-y-auto px-8 py-5">
       <div className="flex w-full items-start justify-between">
-        <button type="button" onClick={onBack} className="flex items-center gap-1.5">
-          <img src={arrowLeft} alt="" className="size-4" />
-          <span className="text-xs font-medium text-slate-700">Back</span>
-        </button>
+        <BackButton onClick={onBack} />
         <button type="button" onClick={onClose}>
           <img src={closeIcon} alt="Close" className="size-4" />
         </button>

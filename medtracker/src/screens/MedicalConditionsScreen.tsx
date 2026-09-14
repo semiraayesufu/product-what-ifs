@@ -4,10 +4,14 @@ import SearchInput from "../components/SearchInput";
 import ListRow from "../components/ListRow";
 import ConditionDetailPanel from "../components/ConditionDetailPanel";
 import ConditionFormPanel from "../components/ConditionFormPanel";
+import AddConditionChooser from "../components/AddConditionChooser";
+import ConditionSearchPanel from "../components/ConditionSearchPanel";
 import EmptyState from "../components/EmptyState";
 import cardiogramIcon from "../assets/icons/cardiogram.svg";
 import plusIcon from "../assets/icons/plus.svg";
 import { useAppStore, slugify } from "../store/AppStore";
+
+type Mode = "view" | "chooser" | "search" | "add" | "edit";
 
 export default function MedicalConditionsScreen({
   onNavigate,
@@ -17,7 +21,18 @@ export default function MedicalConditionsScreen({
   const { conditions, addCondition, updateCondition, removeCondition } = useAppStore();
   const [listQuery, setListQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(conditions[0]?.id ?? null);
-  const [mode, setMode] = useState<"view" | "add" | "edit">("view");
+  const [mode, setMode] = useState<Mode>("view");
+  const [prefillName, setPrefillName] = useState<string | undefined>(undefined);
+
+  function openChooser() {
+    setPrefillName(undefined);
+    setMode("chooser");
+  }
+
+  function closeAddFlow() {
+    setMode("view");
+    setPrefillName(undefined);
+  }
 
   const filtered = useMemo(
     () => conditions.filter((c) => c.name.toLowerCase().includes(listQuery.toLowerCase())),
@@ -36,7 +51,7 @@ export default function MedicalConditionsScreen({
             <p className="flex-1 text-xl font-semibold text-[#1a1a1a]">Medical conditions</p>
             <button
               type="button"
-              onClick={() => setMode("add")}
+              onClick={openChooser}
               className="flex shrink-0 items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs"
             >
               <img src={plusIcon} alt="" className="size-4" />
@@ -62,10 +77,26 @@ export default function MedicalConditionsScreen({
           </div>
         </div>
 
-        {mode === "add" ? (
+        {mode === "chooser" ? (
+          <AddConditionChooser
+            onClose={closeAddFlow}
+            onSelect={(method) => setMode(method === "search" ? "search" : "add")}
+          />
+        ) : mode === "search" ? (
+          <ConditionSearchPanel
+            onBack={() => setMode("chooser")}
+            onClose={closeAddFlow}
+            onSelect={(name) => {
+              setPrefillName(name);
+              setMode("add");
+            }}
+          />
+        ) : mode === "add" ? (
           <ConditionFormPanel
             mode="add"
-            onClose={() => setMode("view")}
+            initialName={prefillName}
+            onBack={() => setMode(prefillName ? "search" : "chooser")}
+            onClose={closeAddFlow}
             onSave={({ name, diagnosisDate, status }) => {
               addCondition({
                 name,
@@ -74,7 +105,7 @@ export default function MedicalConditionsScreen({
                 diagnosedYear: diagnosisDate ? `Diagnosed ${diagnosisDate}` : status,
               });
               setSelectedId(slugify(name));
-              setMode("view");
+              closeAddFlow();
             }}
           />
         ) : mode === "edit" && selected ? (
@@ -108,7 +139,7 @@ export default function MedicalConditionsScreen({
               title="No conditions added yet"
               description="Some medications carry added risk with certain conditions, not just other drugs. Add yours so we can catch that too."
               ctaLabel="Add your first condition"
-              onCta={() => setMode("add")}
+              onCta={openChooser}
             />
           </div>
         ) : (

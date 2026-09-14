@@ -6,6 +6,7 @@ import AllergyDetailPanel from "../components/AllergyDetailPanel";
 import AllergyFormPanel from "../components/AllergyFormPanel";
 import EmptyState from "../components/EmptyState";
 import plusIcon from "../assets/icons/plus.svg";
+import shieldAlertIcon from "../assets/icons/shield-alert.svg";
 import { useAppStore, slugify } from "../store/AppStore";
 
 export default function AllergiesScreen({
@@ -103,7 +104,7 @@ export default function AllergiesScreen({
         ) : allergies.length === 0 ? (
           <div className="flex h-full min-w-0 flex-1 flex-col px-8 py-5">
             <EmptyState
-              icon={<p className="text-[28px]">⚠️</p>}
+              icon={<img src={shieldAlertIcon} alt="" className="size-7" />}
               title="No allergies recorded"
               description="Add any known allergies so we can check new medications against them automatically, from day one."
               ctaLabel="Add your first allergy"

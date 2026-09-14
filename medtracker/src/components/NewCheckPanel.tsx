@@ -1,7 +1,7 @@
 import { useState } from "react";
 import closeIcon from "../assets/icons/close.svg";
 import closeSmallIcon from "../assets/icons/close-14.svg";
-import searchIcon from "../assets/icons/search-lg.svg";
+import searchIcon from "../assets/icons/search.svg";
 import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 
 export default function NewCheckPanel({

@@ -1,10 +1,10 @@
 import logoMark from "../assets/icons/logo-mark.svg";
 import homeIcon from "../assets/icons/home.svg";
 import medicationsIcon from "../assets/icons/medications.svg";
-import checkCircleIcon from "../assets/icons/check-circle.svg";
+import shieldAlertIcon from "../assets/icons/shield-alert.svg";
 import cardiogramIcon from "../assets/icons/cardiogram.svg";
-import usersGroupIcon from "../assets/icons/users-group.svg";
-import userHeadsetIcon from "../assets/icons/user-headset.svg";
+import shieldCheckIcon from "../assets/icons/shield-check.svg";
+import historyIcon from "../assets/icons/history.svg";
 
 export type NavKey =
   | "home"
@@ -17,10 +17,10 @@ export type NavKey =
 const NAV_ITEMS: { key: NavKey; label: string; icon: string }[] = [
   { key: "home", label: "Home", icon: homeIcon },
   { key: "medications", label: "Medications", icon: medicationsIcon },
-  { key: "allergies", label: "Allergies", icon: checkCircleIcon },
+  { key: "allergies", label: "Allergies", icon: shieldAlertIcon },
   { key: "conditions", label: "Medical conditions", icon: cardiogramIcon },
-  { key: "interactions", label: "Interaction checker", icon: usersGroupIcon },
-  { key: "history", label: "History", icon: userHeadsetIcon },
+  { key: "interactions", label: "Interaction checker", icon: shieldCheckIcon },
+  { key: "history", label: "History", icon: historyIcon },
 ];
 
 export default function Sidebar({

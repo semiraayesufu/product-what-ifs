@@ -9,6 +9,7 @@ import ManualMedicationForm, { type ManualMedicationValues } from "../components
 import MedicationDetailPanel from "../components/MedicationDetailPanel";
 import EmptyState from "../components/EmptyState";
 import plusIcon from "../assets/icons/plus.svg";
+import medicationsIcon from "../assets/icons/medications.svg";
 import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 import { useAppStore } from "../store/AppStore";
 
@@ -147,7 +148,7 @@ export default function MedicationsScreen({
               </button>
             </div>
             <EmptyState
-              icon={<p className="text-[28px]">💊</p>}
+              icon={<img src={medicationsIcon} alt="" className="size-7" />}
               title="No medications yet"
               description="Add what you're currently taking so we can start checking for conflicts as your regimen changes."
               ctaLabel="Add your first medication"

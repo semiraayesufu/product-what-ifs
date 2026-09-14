@@ -6,6 +6,7 @@ import NewCheckPanel from "../components/NewCheckPanel";
 import CheckingPanel from "../components/CheckingPanel";
 import ResultPanel from "../components/ResultPanel";
 import plusIcon from "../assets/icons/plus.svg";
+import plusTealIcon from "../assets/icons/plus-teal.svg";
 import { fetchDrugSafetyInfo, excerptAround, DrugApiError } from "../services/drugApi";
 import { useAppStore } from "../store/AppStore";
 import type { ConflictItem, Decision, LogEntry, ResultData, Severity } from "../types";
@@ -213,7 +214,7 @@ export default function InteractionCheckerScreen({
       return (
         <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-4 px-8 py-5">
           <div className="flex size-[72px] items-center justify-center rounded-[36px] bg-teal-100">
-            <img src={plusIcon} alt="" className="size-6" />
+            <img src={plusTealIcon} alt="" className="size-7" />
           </div>
           <div className="flex flex-col items-center gap-1.5 text-center">
             <p className="text-lg font-semibold text-slate-800">No checks yet</p>

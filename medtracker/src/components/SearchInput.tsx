@@ -1,4 +1,4 @@
-import searchIcon from "../assets/icons/search-sm.svg";
+import searchIcon from "../assets/icons/search.svg";
 
 export default function SearchInput({
   size = "sm",

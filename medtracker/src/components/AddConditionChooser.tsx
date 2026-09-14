@@ -1,7 +1,6 @@
 import closeIcon from "../assets/icons/close.svg";
 import searchIcon from "../assets/icons/search.svg";
 import editIcon from "../assets/icons/edit.svg";
-import uploadIcon from "../assets/icons/upload.svg";
 import chevronRight from "../assets/icons/chevron-right.svg";
 
 const OPTIONS = [
@@ -9,13 +8,7 @@ const OPTIONS = [
     key: "search" as const,
     icon: searchIcon,
     title: "Search",
-    description: "Find it in our medication database",
-  },
-  {
-    key: "upload" as const,
-    icon: uploadIcon,
-    title: "Upload",
-    description: "Upload an image or file containing your prescription",
+    description: "Find it in the ICD-10 diagnosis database",
   },
   {
     key: "manual" as const,
@@ -25,21 +18,21 @@ const OPTIONS = [
   },
 ];
 
-export type AddMedicationMethod = "search" | "upload" | "manual";
+export type AddConditionMethod = "search" | "manual";
 
-export default function AddMedicationChooser({
+export default function AddConditionChooser({
   onClose,
   onSelect,
 }: {
   onClose: () => void;
-  onSelect: (method: AddMedicationMethod) => void;
+  onSelect: (method: AddConditionMethod) => void;
 }) {
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-hidden px-8 py-5">
       <div className="flex w-full items-start gap-5">
         <div className="flex flex-1 flex-col gap-2">
-          <p className="text-xl font-semibold text-slate-800">Add medication</p>
-          <p className="text-xs text-slate-600">How will you like to add your medication?</p>
+          <p className="text-xl font-semibold text-slate-800">Add condition</p>
+          <p className="text-xs text-slate-600">How would you like to add this condition?</p>
         </div>
         <button
           type="button"

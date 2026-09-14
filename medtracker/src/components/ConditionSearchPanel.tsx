@@ -1,26 +1,21 @@
+import { useState } from "react";
 import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import searchIcon from "../assets/icons/search.svg";
+import { useLiveConditionSearch } from "../hooks/useLiveConditionSearch";
 
-export default function AddMedicationPanel({
-  query,
-  onQueryChange,
-  matches,
-  loading,
-  offline,
+export default function ConditionSearchPanel({
   onBack,
   onClose,
   onSelect,
 }: {
-  query: string;
-  onQueryChange: (value: string) => void;
-  matches: string[];
-  loading?: boolean;
-  offline?: boolean;
   onBack: () => void;
   onClose: () => void;
   onSelect: (name: string) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const { results: matches, loading, offline } = useLiveConditionSearch(query);
+
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-hidden px-8 py-6">
       <div className="flex w-full items-start justify-between">
@@ -34,8 +29,8 @@ export default function AddMedicationPanel({
         <img src={searchIcon} alt="" className="size-5" />
         <input
           value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search"
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search a condition or diagnosis"
           autoFocus
           className="w-full bg-transparent text-base text-slate-500 placeholder:text-slate-500 focus:outline-none"
         />
@@ -46,23 +41,24 @@ export default function AddMedicationPanel({
           <p className="text-[11px] font-semibold text-slate-600">MATCHES</p>
           {query.trim().length >= 2 && (
             <p className="text-[10px] font-medium uppercase text-slate-400">
-              {offline ? "Offline — local matches" : "Live — NIH RxNorm"}
+              {offline ? "Offline — local matches" : "Live — NIH ICD-10-CM"}
             </p>
           )}
         </div>
         <div className="flex w-full flex-col gap-2">
-          {matches.map((name) => (
+          {matches.map((m) => (
             <button
-              key={name}
+              key={`${m.code}-${m.name}`}
               type="button"
-              onClick={() => onSelect(name)}
-              className="w-full rounded-[10px] bg-slate-100 p-3.5 text-left"
+              onClick={() => onSelect(m.name)}
+              className="flex w-full items-center justify-between gap-3 rounded-[10px] bg-slate-100 p-3.5 text-left"
             >
-              <p className="text-sm font-medium text-slate-800">{name}</p>
+              <p className="text-sm font-medium text-slate-800">{m.name}</p>
+              {m.code && <p className="shrink-0 text-xs text-slate-500">{m.code}</p>}
             </button>
           ))}
           {matches.length === 0 && query.trim().length < 2 && (
-            <p className="text-sm text-slate-500">Start typing to search the live medication database.</p>
+            <p className="text-sm text-slate-500">Start typing to search the live diagnosis database.</p>
           )}
           {matches.length === 0 && query.trim().length >= 2 && loading && (
             <p className="text-sm text-slate-500">Searching…</p>

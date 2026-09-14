@@ -12,6 +12,20 @@ export const MEDICATION_CATALOG = [
   "Trimethoprim-Sulfamethoxazole",
 ];
 
+/** Offline fallback only — the Medical conditions search flow otherwise uses the live ICD-10-CM API. */
+export const CONDITION_CATALOG = [
+  "Lupus",
+  "Type 2 diabetes mellitus",
+  "Essential hypertension",
+  "Asthma",
+  "Rheumatoid arthritis",
+  "Chronic kidney disease",
+  "Hypothyroidism",
+  "Major depressive disorder",
+  "Generalized anxiety disorder",
+  "Migraine",
+];
+
 export const SEVERITY_OPTIONS = ["Mild", "Moderate", "Severe"];
 export const CONDITION_STATUS_OPTIONS = ["Active", "Managed", "Resolved"];
 

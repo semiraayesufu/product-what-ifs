@@ -1,6 +1,6 @@
 import { useState } from "react";
 import closeIcon from "../assets/icons/close.svg";
-import angleDown from "../assets/icons/angle-down.svg";
+import angleDown from "../assets/icons/chevron-down.svg";
 import { SEVERITY_OPTIONS } from "../data/profile";
 import type { Allergy } from "../types";
 

@@ -1,21 +1,26 @@
 import { useState } from "react";
+import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
-import angleDown from "../assets/icons/angle-down.svg";
+import angleDown from "../assets/icons/chevron-down.svg";
 import { CONDITION_STATUS_OPTIONS } from "../data/profile";
 import type { Condition } from "../types";
 
 export default function ConditionFormPanel({
   mode,
   initial,
+  initialName,
+  onBack,
   onClose,
   onSave,
 }: {
   mode: "add" | "edit";
   initial?: Condition;
+  initialName?: string;
+  onBack?: () => void;
   onClose: () => void;
   onSave: (values: { name: string; diagnosisDate: string; status: string }) => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? "");
+  const [name, setName] = useState(initial?.name ?? initialName ?? "");
   const [diagnosisDate, setDiagnosisDate] = useState("");
   const [status, setStatus] = useState(CONDITION_STATUS_OPTIONS[0]);
 
@@ -24,6 +29,7 @@ export default function ConditionFormPanel({
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-hidden px-8 py-5">
       <div className="flex w-full items-center gap-5">
+        {onBack && <BackButton onClick={onBack} />}
         <p className="flex-1 text-xl font-semibold text-slate-800">
           {mode === "add" ? "Add condition" : "Edit condition"}
         </p>
