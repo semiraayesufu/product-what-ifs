@@ -13,7 +13,7 @@ const OPTIONS = [
   {
     key: "entry" as const,
     icon: editIcon,
-    title: "Enter medication",
+    title: "Manual entry",
     description: "Search our medication database, or type in the details yourself",
   },
 ];
