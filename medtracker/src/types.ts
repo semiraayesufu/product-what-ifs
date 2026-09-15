@@ -56,7 +56,8 @@ export interface ResultData {
   conflicts?: ConflictItem[];
   checkedAgainst?: string;
   source?: string;
-  addPromptName?: string;
+  /** Checked items not already in the medication list — offered as "add to my medications" actions. */
+  addPromptNames?: string[];
   /** Overrides the default "not verified" copy for an unresolved outcome — e.g. offline vs. no label on file. */
   note?: string;
 }

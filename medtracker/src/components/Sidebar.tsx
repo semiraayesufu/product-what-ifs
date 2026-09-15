@@ -33,7 +33,7 @@ export default function Sidebar({
   disclaimer?: string;
 }) {
   return (
-    <div className="flex h-full w-[240px] shrink-0 flex-col gap-5 overflow-hidden border-r border-slate-200 bg-white p-5">
+    <div className="flex h-full w-[240px] shrink-0 flex-col gap-5 overflow-hidden border-r border-slate-200 bg-white p-5 print:hidden">
       <div className="flex items-center border-b border-slate-200 pb-5">
         <div className="flex items-center gap-2">
           <img src={logoMark} alt="" className="h-6 w-[19px]" />

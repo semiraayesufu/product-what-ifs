@@ -18,8 +18,16 @@ export default function InteractionCheckerScreen({
 }: {
   onNavigate?: (key: NavKey) => void;
 }) {
-  const { medications, allergies, conditions, log, addMedication, addLogEntry, decideLogEntry } =
-    useAppStore();
+  const {
+    medications,
+    allergies,
+    conditions,
+    log,
+    addMedication,
+    addLogEntry,
+    decideLogEntry,
+    removeLogEntry,
+  } = useAppStore();
   const [listQuery, setListQuery] = useState("");
   const [state, setState] = useState<CheckerState>("idle");
   const [selectedId, setSelectedId] = useState<string>(log[0]?.id ?? "");
@@ -79,6 +87,7 @@ export default function InteractionCheckerScreen({
   function backToIdle() {
     setState("idle");
     setPendingEntryId(null);
+    setSelectedId("");
   }
 
   const selectedEntry = log.find((entry) => entry.id === selectedId) ?? null;
@@ -110,6 +119,10 @@ export default function InteractionCheckerScreen({
           onBack={backToIdle}
           onClose={backToIdle}
           onAddMedication={handleAddMedication}
+          onDelete={() => {
+            removeLogEntry(entry.id);
+            backToIdle();
+          }}
         />
       );
     }
@@ -137,7 +150,11 @@ export default function InteractionCheckerScreen({
         </div>
       );
     }
-    return null;
+    return (
+      <div className="flex h-full min-w-0 flex-1 items-center justify-center px-8 py-5">
+        <p className="text-sm text-slate-500">Select a check to see its details.</p>
+      </div>
+    );
   })();
 
   return (
@@ -149,7 +166,7 @@ export default function InteractionCheckerScreen({
           disclaimer="It does not diagnose, prescribe, or replace advice from a licensed provider."
         />
 
-        <div className="flex h-full min-w-0 max-w-[480px] flex-1 flex-col gap-6 overflow-hidden border-r border-slate-200 bg-white px-8 py-5">
+        <div className="flex h-full min-w-0 max-w-[480px] flex-1 flex-col gap-6 overflow-hidden border-r border-slate-200 bg-white px-8 py-5 print:hidden">
           <div className="flex w-full items-center gap-5">
             <div className="flex flex-1 flex-col">
               <p className="text-xl font-semibold text-[#1a1a1a]">Drug Interaction Checker</p>

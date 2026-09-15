@@ -272,7 +272,7 @@ export default function MedicationsScreen({
           </div>
         ) : (
           <>
-            <div className="flex h-full min-w-0 max-w-[480px] flex-1 flex-col gap-6 overflow-hidden border-r border-slate-200 bg-white px-8 py-5">
+            <div className="flex h-full min-w-0 max-w-[480px] flex-1 flex-col gap-6 overflow-hidden border-r border-slate-200 bg-white px-8 py-5 print:hidden">
               <div className="flex w-full items-center gap-5 bg-white">
                 <div className="flex flex-1 flex-col bg-white">
                   <p className="text-xl font-semibold text-[#1a1a1a]">Medications</p>
@@ -328,7 +328,7 @@ export default function MedicationsScreen({
         )}
       </div>
 
-      <div className="flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-5 py-3.5 text-slate-600">
+      <div className="flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-5 py-3.5 text-slate-600 print:hidden">
         <p className="text-[13px] font-bold">ⓘ</p>
         <p className="text-xs">
           MedTracker shares information only — It is not a replacement for professional medical advice. — It does not diagnose, prescribe, or replace advice from a licensed provider.

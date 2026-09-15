@@ -45,11 +45,11 @@ export async function checkMedicationsAgainstProfile(
   items: string[],
   profileNames: string[],
   checkedAgainstText: string,
-  /** When provided, the result offers to add the first checked item not already in this list. */
+  /** When provided, the result offers to add every checked item not already in this list. */
   existingMedicationNames?: string[],
 ): Promise<CheckOutcome> {
-  const addPromptName = existingMedicationNames
-    ? items.find((item) => !existingMedicationNames.some((m) => m.toLowerCase() === item.toLowerCase()))
+  const addPromptNames = existingMedicationNames
+    ? items.filter((item) => !existingMedicationNames.some((m) => m.toLowerCase() === item.toLowerCase()))
     : undefined;
 
   try {
@@ -66,7 +66,7 @@ export async function checkMedicationsAgainstProfile(
           title: items.join(", "),
           subtitle: "No FDA label on file",
           note: "openFDA doesn't have a published label under this exact name — try the generic name, or double-check the spelling.",
-          addPromptName: items[0],
+          addPromptNames: [items[0]],
         },
       };
     }
@@ -122,7 +122,7 @@ export async function checkMedicationsAgainstProfile(
           title,
           subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found — ${anyOffline ? "from an offline FDA data snapshot" : "live from openFDA"}`,
           conflicts,
-          addPromptName,
+          addPromptNames,
         },
       };
     }
@@ -135,7 +135,7 @@ export async function checkMedicationsAgainstProfile(
         subtitle: "No mention found in the current FDA label",
         checkedAgainst: checkedAgainstText,
         source: sourceLabel,
-        addPromptName,
+        addPromptNames,
       },
     };
   } catch (err) {

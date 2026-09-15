@@ -2,6 +2,7 @@ import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import printerIcon from "../assets/icons/printer.svg";
 import plusIcon from "../assets/icons/plus.svg";
+import trashIcon from "../assets/icons/trash-bin.svg";
 import SeverityBadge from "./SeverityBadge";
 import type { ResultData, Decision } from "../types";
 
@@ -22,6 +23,7 @@ export default function ResultPanel({
   onDecide,
   onConfirm,
   confirmLabel,
+  onDelete,
 }: {
   data: ResultData;
   onBack: () => void;
@@ -32,11 +34,13 @@ export default function ResultPanel({
   /** Persistent confirm action shown regardless of outcome — used by batch add-flows to finalize. */
   onConfirm?: () => void;
   confirmLabel?: string;
+  /** Deletes this saved check from history — only passed for entries that exist in the log. */
+  onDelete?: () => void;
 }) {
   const needsDecision = onDecide && (data.outcome === "found" || data.outcome === "unresolved");
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-hidden px-8 py-5">
-      <div className="flex w-full items-start justify-between">
+      <div className="flex w-full items-start justify-between print:hidden">
         <BackButton onClick={onBack} />
         <button type="button" onClick={onClose}>
           <img src={closeIcon} alt="Close" className="size-4" />
@@ -48,14 +52,28 @@ export default function ResultPanel({
           <p className="text-xl font-semibold text-slate-800">{data.title}</p>
           <p className="text-xs text-slate-600">{data.subtitle}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="flex shrink-0 items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
-        >
-          <img src={printerIcon} alt="" className="size-3.5" />
-          <span className="text-xs font-medium text-slate-600">Print Result</span>
-        </button>
+        <div className="flex shrink-0 items-center gap-2 print:hidden">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
+          >
+            <img src={printerIcon} alt="" className="size-3.5" />
+            <span className="text-xs font-medium text-slate-600">Print Result</span>
+          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Delete this check from your history?")) onDelete();
+              }}
+              className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
+            >
+              <img src={trashIcon} alt="" className="size-3.5" />
+              <span className="text-xs font-medium text-[#e7000b]">Delete</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto">
@@ -103,7 +121,7 @@ export default function ResultPanel({
             {decision ? (
               <p className="text-sm font-medium text-slate-700">{DECISION_LABEL[decision]}</p>
             ) : (
-              <div className="flex w-full flex-wrap gap-2">
+              <div className="flex w-full flex-wrap gap-2 print:hidden">
                 <button
                   type="button"
                   onClick={() => onDecide?.("proceed")}
@@ -130,26 +148,32 @@ export default function ResultPanel({
           </div>
         )}
 
-        {data.addPromptName && (
-          <div className="flex w-full flex-col gap-4 rounded-xl bg-slate-100 p-[18px]">
+        {data.addPromptNames && data.addPromptNames.length > 0 && (
+          <div className="flex w-full flex-col gap-4 rounded-xl bg-slate-100 p-[18px] print:hidden">
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-semibold uppercase text-slate-800">
-                {data.addPromptName} isn't in your medication list
+                {data.addPromptNames.length > 1
+                  ? `${data.addPromptNames.join(", ")} aren't in your medication list`
+                  : `${data.addPromptNames[0]} isn't in your medication list`}
               </p>
               <p className="text-xs text-slate-600">
-                Add it to your profile so future checks account for it automatically
+                Add {data.addPromptNames.length > 1 ? "them" : "it"} to your profile so future checks
+                account for {data.addPromptNames.length > 1 ? "them" : "it"} automatically
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onAddMedication?.(data.addPromptName!)}
-              className="flex w-fit items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs"
-            >
-              <img src={plusIcon} alt="" className="size-4" />
-              <span className="text-sm font-semibold text-white">
-                Add {data.addPromptName} to my medications
-              </span>
-            </button>
+            <div className="flex w-full flex-wrap gap-2">
+              {data.addPromptNames.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => onAddMedication?.(name)}
+                  className="flex w-fit items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs"
+                >
+                  <img src={plusIcon} alt="" className="size-4" />
+                  <span className="text-sm font-semibold text-white">Add {name} to my medications</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -158,7 +182,7 @@ export default function ResultPanel({
         <button
           type="button"
           onClick={onConfirm}
-          className="flex w-full shrink-0 items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs"
+          className="flex w-full shrink-0 items-center justify-center rounded-lg bg-teal-700 px-4 py-2.5 shadow-xs print:hidden"
         >
           <span className="text-sm font-semibold text-white">{confirmLabel ?? "Continue"}</span>
         </button>

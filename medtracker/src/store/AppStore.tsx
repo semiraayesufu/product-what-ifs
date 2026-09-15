@@ -25,6 +25,7 @@ interface AppState {
   removeCondition: (id: string) => void;
   addLogEntry: (entry: LogEntry) => void;
   decideLogEntry: (id: string, decision: Decision, contactedProvider?: string) => void;
+  removeLogEntry: (id: string) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -104,6 +105,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setLog((prev) =>
           prev.map((e) => (e.id === id ? { ...e, decision, contactedProvider } : e)),
         ),
+      removeLogEntry: (id) => setLog((prev) => prev.filter((e) => e.id !== id)),
     }),
     [medications, allergies, conditions, log],
   );

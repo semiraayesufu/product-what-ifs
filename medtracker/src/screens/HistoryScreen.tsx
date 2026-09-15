@@ -16,7 +16,7 @@ export default function HistoryScreen({
   autoSelectId?: string | null;
   onAutoSelectHandled?: () => void;
 }) {
-  const { log, addMedication, decideLogEntry } = useAppStore();
+  const { log, addMedication, decideLogEntry, removeLogEntry } = useAppStore();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(log[0]?.id ?? null);
 
@@ -44,7 +44,7 @@ export default function HistoryScreen({
           disclaimer="It does not diagnose, prescribe, or replace advice from a licensed provider."
         />
 
-        <div className="flex h-full min-w-0 max-w-[480px] flex-1 flex-col gap-6 overflow-hidden border-r border-slate-200 bg-white px-8 py-5">
+        <div className="flex h-full min-w-0 max-w-[480px] flex-1 flex-col gap-6 overflow-hidden border-r border-slate-200 bg-white px-8 py-5 print:hidden">
           <div className="flex w-full items-center gap-5">
             <p className="flex-1 text-xl font-semibold text-[#1a1a1a]">History</p>
             <button
@@ -92,6 +92,10 @@ export default function HistoryScreen({
             onBack={() => setSelectedId(null)}
             onClose={() => setSelectedId(null)}
             onAddMedication={addMedication}
+            onDelete={() => {
+              removeLogEntry(selected.id);
+              setSelectedId(null);
+            }}
           />
         ) : (
           log.length > 0 && (
