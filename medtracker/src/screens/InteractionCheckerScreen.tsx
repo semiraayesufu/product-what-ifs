@@ -40,8 +40,6 @@ export default function InteractionCheckerScreen({
     [log, listQuery],
   );
 
-  const checkedAgainstText = `${medications.length} medications, ${allergies.length} allergies, ${conditions.length} conditions`;
-
   function performLiveCheck(items: string[]): Promise<CheckOutcome> {
     const profileNames = [
       ...medications.map((m) => m.name),
@@ -51,7 +49,7 @@ export default function InteractionCheckerScreen({
     return checkMedicationsAgainstProfile(
       items,
       profileNames,
-      checkedAgainstText,
+      { medications: medications.length, allergies: allergies.length, conditions: conditions.length },
       medications.map((m) => m.name),
     );
   }

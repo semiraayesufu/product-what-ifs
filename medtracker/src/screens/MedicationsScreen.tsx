@@ -122,8 +122,11 @@ export default function MedicationsScreen({
       ...allergies.map((a) => a.name),
       ...conditions.map((c) => c.name),
     ];
-    const checkedAgainstText = `${medications.length} medications, ${allergies.length} allergies, ${conditions.length} conditions`;
-    pendingCheckRef.current = checkMedicationsAgainstProfile(items, profileNames, checkedAgainstText);
+    pendingCheckRef.current = checkMedicationsAgainstProfile(items, profileNames, {
+      medications: medications.length,
+      allergies: allergies.length,
+      conditions: conditions.length,
+    });
     setFlowStep("checking");
   }
 
@@ -133,7 +136,7 @@ export default function MedicationsScreen({
       checkMedicationsAgainstProfile(
         staged.map((v) => v.name),
         [],
-        "",
+        { medications: 0, allergies: 0, conditions: 0 },
       )
     );
     pendingCheckRef.current = null;

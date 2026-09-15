@@ -33,6 +33,24 @@ function refineSeverity(base: Severity, excerpt: string): Severity {
 
 export type CheckOutcome = { result: ResultData; severity: LogEntry["severity"] };
 
+export type ProfileCounts = { medications: number; allergies: number; conditions: number };
+
+// The Interaction Checker works standalone — you shouldn't need anything saved
+// in your profile to check a drug or two against each other. Say what was
+// actually compared instead of always reporting profile counts, which read as
+// a broken "0/0/0" tally when the profile is empty or irrelevant to this check.
+function buildCheckedAgainstText(items: string[], profile: ProfileCounts): string {
+  const profileTotal = profile.medications + profile.allergies + profile.conditions;
+  if (items.length > 1) {
+    return profileTotal > 0
+      ? `Each other, plus ${profile.medications} medications, ${profile.allergies} allergies, ${profile.conditions} conditions in your profile`
+      : "Each other";
+  }
+  return profileTotal > 0
+    ? `${profile.medications} medications, ${profile.allergies} allergies, ${profile.conditions} conditions in your profile`
+    : "Nothing saved yet — add medications, allergies, or conditions to your profile to check this against what you're already taking";
+}
+
 /**
  * Fetches each item's real FDA label live (openFDA) and scans its interaction /
  * warning / contraindication text for mentions of anything in `profileNames`
@@ -44,10 +62,11 @@ export type CheckOutcome = { result: ResultData; severity: LogEntry["severity"] 
 export async function checkMedicationsAgainstProfile(
   items: string[],
   profileNames: string[],
-  checkedAgainstText: string,
+  profileCounts: ProfileCounts,
   /** When provided, the result offers to add every checked item not already in this list. */
   existingMedicationNames?: string[],
 ): Promise<CheckOutcome> {
+  const checkedAgainstText = buildCheckedAgainstText(items, profileCounts);
   const addPromptNames = existingMedicationNames
     ? items.filter((item) => !existingMedicationNames.some((m) => m.toLowerCase() === item.toLowerCase()))
     : undefined;
