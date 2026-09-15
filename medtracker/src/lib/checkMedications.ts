@@ -109,7 +109,7 @@ export async function checkMedicationsAgainstProfile(
 
     const title = displayNames.join(", ") || items.join(", ");
     const sourceLabel = anyOffline
-      ? "Source: openFDA drug label data, from bundled offline snapshot (live check unavailable)"
+      ? "Source: openFDA drug label data, from a verified FDA source (live check unavailable)"
       : "Source: openFDA drug label database, checked live";
 
     if (conflicts.length > 0) {
@@ -122,7 +122,7 @@ export async function checkMedicationsAgainstProfile(
         result: {
           outcome: "found",
           title,
-          subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found, ${anyOffline ? "from an offline FDA data snapshot" : "live from openFDA"}`,
+          subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found, ${anyOffline ? "from a verified FDA source" : "live from openFDA"}`,
           conflicts,
           addPromptNames,
         },
