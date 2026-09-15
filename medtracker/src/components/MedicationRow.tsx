@@ -21,7 +21,7 @@ export default function MedicationRow({
       <div className="flex flex-1 flex-col gap-1.5">
         <p className="text-sm font-medium text-slate-800">{medication.name}</p>
         <p className="text-[11px] text-slate-500">
-          {medication.dosage} — {medication.frequency}
+          {medication.dosage}, {medication.frequency}
         </p>
       </div>
       <img src={chevronRight} alt="" className="size-4" />

@@ -144,7 +144,7 @@ export default function ManualMedicationForm({
                 ))
               )}
               <p className="border-t border-slate-100 px-3.5 py-1.5 text-[10px] font-medium uppercase text-slate-400">
-                {offline ? "Offline — showing local matches" : "Live results — NIH RxNorm"}
+                {offline ? "Offline, showing local matches" : "Live results, NIH RxNorm"}
               </p>
             </div>
           )}

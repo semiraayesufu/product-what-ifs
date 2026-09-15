@@ -122,22 +122,13 @@ export default function MedicationsScreen({
       ...allergies.map((a) => a.name),
       ...conditions.map((c) => c.name),
     ];
-    pendingCheckRef.current = checkMedicationsAgainstProfile(items, profileNames, {
-      medications: medications.length,
-      allergies: allergies.length,
-      conditions: conditions.length,
-    });
+    pendingCheckRef.current = checkMedicationsAgainstProfile(items, profileNames);
     setFlowStep("checking");
   }
 
   async function handleCheckingDone() {
     const outcome = await (
-      pendingCheckRef.current ??
-      checkMedicationsAgainstProfile(
-        staged.map((v) => v.name),
-        [],
-        { medications: 0, allergies: 0, conditions: 0 },
-      )
+      pendingCheckRef.current ?? checkMedicationsAgainstProfile(staged.map((v) => v.name), [])
     );
     pendingCheckRef.current = null;
     setCheckOutcome(outcome);
@@ -205,7 +196,7 @@ export default function MedicationsScreen({
           subtitle={`${stagedCount} medication${stagedCount === 1 ? "" : "s"} ready to check - add as many as you need before adding it to your profile`}
           rows={staged.map((v) => ({
             title: v.name,
-            subtitle: formatDosage(v) && v.frequency ? `${formatDosage(v)} — ${v.frequency}` : formatDosage(v) || v.frequency || "No dosage details",
+            subtitle: formatDosage(v) && v.frequency ? `${formatDosage(v)}, ${v.frequency}` : formatDosage(v) || v.frequency || "No dosage details",
           }))}
           onEdit={handleEditStaged}
           onRemove={handleRemoveStaged}
@@ -334,7 +325,7 @@ export default function MedicationsScreen({
       <div className="flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-5 py-3.5 text-slate-600 print:hidden">
         <p className="text-[13px] font-bold">ⓘ</p>
         <p className="text-xs">
-          MedTracker shares information only — It is not a replacement for professional medical advice. — It does not diagnose, prescribe, or replace advice from a licensed provider.
+          MedTracker shares information only. It is not a replacement for professional medical advice. It does not diagnose, prescribe, or replace advice from a licensed provider.
         </p>
       </div>
     </div>

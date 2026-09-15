@@ -46,12 +46,7 @@ export default function InteractionCheckerScreen({
       ...allergies.map((a) => a.name),
       ...conditions.map((c) => c.name),
     ];
-    return checkMedicationsAgainstProfile(
-      items,
-      profileNames,
-      { medications: medications.length, allergies: allergies.length, conditions: conditions.length },
-      medications.map((m) => m.name),
-    );
+    return checkMedicationsAgainstProfile(items, profileNames, medications.map((m) => m.name));
   }
 
   function handleSave(items: string[]) {

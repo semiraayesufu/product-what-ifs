@@ -58,7 +58,7 @@ export default function UploadMedicationPanel({
       <div className="flex flex-col gap-2 rounded-lg bg-slate-100 p-3.5 text-slate-600">
         <p className="text-[11px] font-semibold">NOTE:</p>
         <p className="text-xs leading-4">
-          We can't automatically read prescription files yet — after uploading, you'll confirm the
+          We can't automatically read prescription files yet. After uploading, you'll confirm the
           details yourself on the next screen.
         </p>
       </div>

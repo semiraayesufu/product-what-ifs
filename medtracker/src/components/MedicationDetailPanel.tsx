@@ -27,7 +27,7 @@ export default function MedicationDetailPanel({
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-teal-700" />
             <p className="text-xs text-slate-600">
-              {medication.dosage} — {medication.frequency}
+              {medication.dosage}, {medication.frequency}
             </p>
           </div>
         </div>

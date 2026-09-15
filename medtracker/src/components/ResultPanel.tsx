@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import copyIcon from "../assets/icons/copy.svg";
@@ -12,10 +12,10 @@ import type { ResultData, Decision } from "../types";
 
 export type { ResultData };
 
-// A real, staffed 24/7 US hotline for exactly this kind of question — not a
+// A real, staffed 24/7 US hotline for exactly this kind of question, not a
 // stand-in for a specific provider's number, which the app has no way to know.
 const POISON_CONTROL_TEL = "+18002221222";
-const POISON_CONTROL_DISPLAY = "1-800-222-1222";
+const POISON_CONTROL_DISPLAY = "1 800 222 1222";
 
 const DECISION_LABEL: Record<Decision, string> = {
   proceed: "You chose to proceed",
@@ -27,7 +27,7 @@ function buildCopyText(data: ResultData): string {
   const lines = [data.title, data.subtitle, ""];
   if (data.outcome === "found" && data.conflicts) {
     for (const c of data.conflicts) {
-      lines.push(`${c.pair} — ${c.severity.toUpperCase()}`);
+      lines.push(`${c.pair}: ${c.severity.toUpperCase()}`);
       lines.push(c.headline);
       lines.push(c.detail);
       lines.push(`What this means: ${SEVERITY_GUIDANCE[c.severity]}`);
@@ -35,48 +35,18 @@ function buildCopyText(data: ResultData): string {
     }
   }
   if (data.outcome === "clear") {
-    lines.push(`Checked against: ${data.checkedAgainst}`);
+    lines.push("No known interaction found. Likely safe to take together.");
     if (data.source) lines.push(data.source);
   }
   if (data.outcome === "unresolved") {
     lines.push(data.note ?? "We don't have documented interaction data for this item yet.");
   }
-  lines.push("", "This is informational only — not a substitute for medical advice.");
+  lines.push("", "This is informational only. Not a substitute for medical advice.");
   return lines.join("\n");
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-/** A self-contained printable page, opened in its own (unsandboxed) tab via a
- * real link — window.print() is blocked inside the artifact's sandboxed
- * iframe, but this new tab is a normal top-level page where it works. */
-function buildPrintableHtml(data: ResultData): string {
-  const body = escapeHtml(buildCopyText(data)).replace(/\n/g, "<br>");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(data.title)} — MedTracker</title>
-<style>
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:640px;margin:40px auto;padding:0 20px;color:#141413;line-height:1.6}
-h1{font-size:20px;margin-bottom:4px}
-.subtitle{color:#555;margin-bottom:24px;font-size:14px}
-.block{border:1px solid #ddd;border-radius:8px;padding:16px 20px;margin-bottom:16px;background:#fafafa;font-size:13px}
-button{font:inherit;background:#0f766e;color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}
-@media print { button { display:none } }
-</style></head>
-<body>
-<h1>${escapeHtml(data.title)}</h1>
-<p class="subtitle">${escapeHtml(data.subtitle)}</p>
-<div class="block">${body}</div>
-<button onclick="window.print()">Print this page</button>
-</body></html>`;
-}
-
 /** Copies via the Clipboard API where allowed, falling back to a hidden-textarea
- * execCommand copy — the app runs inside a sandboxed iframe where the Clipboard
+ * execCommand copy. The app runs inside a sandboxed iframe where the Clipboard
  * API can be unavailable even though a direct user click is driving it. */
 async function copyToClipboard(text: string): Promise<boolean> {
   try {
@@ -121,12 +91,12 @@ export default function ResultPanel({
   onAddMedication?: (name: string) => void;
   decision?: Decision;
   onDecide?: (decision: Decision) => void;
-  /** Persistent confirm action shown regardless of outcome — used by batch add-flows to finalize. */
+  /** Persistent confirm action shown regardless of outcome, used by batch add-flows to finalize. */
   onConfirm?: () => void;
   confirmLabel?: string;
-  /** Deletes this saved check from history — only passed for entries that exist in the log. */
+  /** Deletes this saved check from history. Only passed for entries that exist in the log. */
   onDelete?: () => void;
-  /** Current medication names — used to hide "add to medications" prompts for items already added. */
+  /** Current medication names, used to hide "add to medications" prompts for items already added. */
   existingMedicationNames?: string[];
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -136,13 +106,6 @@ export default function ResultPanel({
   const addPromptNames = data.addPromptNames?.filter(
     (name) => !existingMedicationNames?.some((m) => m.toLowerCase() === name.toLowerCase()),
   );
-
-  const printableUrl = useMemo(() => {
-    const blob = new Blob([buildPrintableHtml(data)], { type: "text/html" });
-    return URL.createObjectURL(blob);
-  }, [data]);
-
-  useEffect(() => () => URL.revokeObjectURL(printableUrl), [printableUrl]);
 
   async function handleCopy() {
     const ok = await copyToClipboard(buildCopyText(data));
@@ -166,15 +129,14 @@ export default function ResultPanel({
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5 print:hidden">
           <div className="flex items-center gap-2">
-            <a
-              href={printableUrl}
-              target="_blank"
-              rel="noopener"
+            <button
+              type="button"
+              onClick={() => window.print()}
               className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
             >
               <img src={printerIcon} alt="" className="size-3.5" />
               <span className="text-xs font-medium text-slate-600">Print Result</span>
-            </a>
+            </button>
             <button
               type="button"
               onClick={handleCopy}
@@ -196,9 +158,12 @@ export default function ResultPanel({
               </button>
             )}
           </div>
+          <p className="max-w-[220px] text-right text-[11px] text-slate-400">
+            If Print doesn't open a dialog, use Ctrl+P (Windows) or Cmd+P (Mac) instead.
+          </p>
           {copyState === "failed" && (
             <p className="max-w-[220px] text-right text-[11px] text-[#e7000b]">
-              Couldn't copy automatically — select the result text and copy it manually.
+              Couldn't copy automatically. Select the result text and copy it manually.
             </p>
           )}
           {onDelete && confirmingDelete && (
@@ -240,23 +205,17 @@ export default function ResultPanel({
         )}
 
         {data.outcome === "clear" && (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-start gap-2.5 rounded-xl border border-[#a4f4cf] bg-[#ecfdf5] p-[18px]">
-              <img src={shieldCheckIcon} alt="" className="mt-0.5 size-5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-bold text-[#006045]">
-                  No known interaction found — likely safe to take together
-                </p>
-                <p className="text-xs leading-[18px] text-[#006045]">
-                  Nothing in the current FDA label data flags a conflict here. This isn't a
-                  guarantee — always mention everything you take to your doctor or pharmacist.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5 rounded-xl bg-[#f1f1f1] p-[18px]">
-              <p className="text-[10px] font-bold text-[#737373]">CHECKED AGAINST</p>
-              <p className="text-sm font-bold text-[#141414]">{data.checkedAgainst}</p>
-              <p className="text-xs text-[#737373]">{data.source}</p>
+          <div className="flex items-start gap-2.5 rounded-xl border border-[#a4f4cf] bg-[#ecfdf5] p-[18px]">
+            <img src={shieldCheckIcon} alt="" className="mt-0.5 size-5 shrink-0" />
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-bold text-[#006045]">
+                No known interaction found. Likely safe to take together.
+              </p>
+              <p className="text-xs leading-[18px] text-[#006045]">
+                Nothing in the current FDA label data flags a conflict here. This isn't a
+                guarantee. Always mention everything you take to your doctor or pharmacist.
+              </p>
+              {data.source && <p className="text-xs text-[#3d8a6e]">{data.source}</p>}
             </div>
           </div>
         )}
@@ -307,8 +266,8 @@ export default function ResultPanel({
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Poison Control is a free, confidential medication safety line, staffed 24/7 —
-                  not your personal doctor's office. In a medical emergency, call 911.
+                  Poison Control is a free, confidential medication safety line, staffed 24/7. It
+                  is not your personal doctor's office. In a medical emergency, call 911.
                 </p>
               </div>
             )}

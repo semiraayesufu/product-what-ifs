@@ -75,7 +75,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
             severityLabel: allergy.severityLabel,
             reactionName: allergy.reactionName,
             reactionSeverity: allergy.reactionSeverity,
-            changedAgo: "Active allergy — added just now",
+            changedAgo: "Active allergy, added just now",
             flagged: [],
             history: [{ label: "Added to profile", date: "Today" }],
           },

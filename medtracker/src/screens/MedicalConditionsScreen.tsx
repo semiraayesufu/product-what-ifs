@@ -70,7 +70,7 @@ export default function MedicalConditionsScreen({
       addCondition({
         name: values.name,
         statusLabel: values.diagnosisDate
-          ? `${values.status} — diagnosed ${values.diagnosisDate}`
+          ? `${values.status}, diagnosed ${values.diagnosisDate}`
           : values.status,
         diagnosisName: values.name,
         diagnosedYear: values.diagnosisDate ? `Diagnosed ${values.diagnosisDate}` : values.status,
@@ -104,7 +104,7 @@ export default function MedicalConditionsScreen({
           subtitle={`${stagedCount} condition${stagedCount === 1 ? "" : "s"} ready to add - add as many as you need before saving to your profile`}
           rows={staged.map((v) => ({
             title: v.name,
-            subtitle: v.diagnosisDate ? `${v.status} — diagnosed ${v.diagnosisDate}` : v.status,
+            subtitle: v.diagnosisDate ? `${v.status}, diagnosed ${v.diagnosisDate}` : v.status,
           }))}
           onEdit={(i) => {
             setEditingIndex(i);
@@ -174,7 +174,7 @@ export default function MedicalConditionsScreen({
             onSave={({ name, diagnosisDate, status }) => {
               updateCondition(selected.id, {
                 name,
-                statusLabel: diagnosisDate ? `${status} — diagnosed ${diagnosisDate}` : status,
+                statusLabel: diagnosisDate ? `${status}, diagnosed ${diagnosisDate}` : status,
                 diagnosisName: name,
                 diagnosedYear: diagnosisDate ? `Diagnosed ${diagnosisDate}` : status,
               });
@@ -211,7 +211,7 @@ export default function MedicalConditionsScreen({
       <div className="flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-5 py-3.5 text-slate-600">
         <p className="text-[13px] font-bold">ⓘ</p>
         <p className="text-xs">
-          MedTracker shares information only — It is not a replacement for professional medical advice. — It does not diagnose, prescribe, or replace advice from a licensed provider.
+          MedTracker shares information only. It is not a replacement for professional medical advice. It does not diagnose, prescribe, or replace advice from a licensed provider.
         </p>
       </div>
     </div>

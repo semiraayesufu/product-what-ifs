@@ -78,7 +78,7 @@ export default function HistoryScreen({
             )}
             {log.length === 0 && (
               <p className="text-sm text-slate-500">
-                Nothing here yet — decisions from the Interaction Checker will show up as history.
+                Nothing here yet. Decisions from the Interaction Checker will show up as history.
               </p>
             )}
           </div>

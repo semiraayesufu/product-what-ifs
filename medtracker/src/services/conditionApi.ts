@@ -22,7 +22,7 @@ export async function searchConditionNames(term: string, signal?: AbortSignal): 
     res = await fetch(url, { signal });
   } catch (err) {
     if (err instanceof DOMException && err.name === "AbortError") throw err;
-    throw new ConditionApiError("Couldn't reach the live condition database — check your connection.");
+    throw new ConditionApiError("Couldn't reach the live condition database. Check your connection.");
   }
   if (!res.ok) throw new ConditionApiError(`ICD-10 lookup failed (${res.status})`);
 

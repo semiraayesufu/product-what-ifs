@@ -102,7 +102,7 @@ export default function AllergiesScreen({
           subtitle={`${stagedCount} allerg${stagedCount === 1 ? "y" : "ies"} ready to add - add as many as you need before saving to your profile`}
           rows={staged.map((v) => ({
             title: v.name,
-            subtitle: `${v.severity} — ${v.reactionName}`,
+            subtitle: `${v.severity}, ${v.reactionName}`,
           }))}
           onEdit={(i) => {
             setEditingIndex(i);
@@ -213,7 +213,7 @@ export default function AllergiesScreen({
       <div className="flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-5 py-3.5 text-slate-600">
         <p className="text-[13px] font-bold">ⓘ</p>
         <p className="text-xs">
-          MedTracker shares information only — It is not a replacement for professional medical advice. — It does not diagnose, prescribe, or replace advice from a licensed provider.
+          MedTracker shares information only. It is not a replacement for professional medical advice. It does not diagnose, prescribe, or replace advice from a licensed provider.
         </p>
       </div>
     </div>

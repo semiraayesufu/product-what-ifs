@@ -8,11 +8,11 @@ function escapeRegExp(s: string): string {
 }
 
 // Real FDA "Drug Interactions" sections are often just a flat list of drug
-// names grouped by class, with no per-drug severity language — so every
-// match found there lands at the same section-based default (Moderate),
-// even when the actual text nearby says something much stronger or weaker.
-// Read the excerpt itself for real signal language and adjust from there,
-// instead of relying only on which section matched.
+// names grouped by class, with no per-drug severity language, so every match
+// found there lands at the same section-based default (Moderate) even when
+// the actual text nearby says something much stronger or weaker. Read the
+// excerpt itself for real signal language and adjust from there, instead of
+// relying only on which section matched.
 const MAJOR_SIGNALS =
   /\b(contraindicated|should not be (?:used|co-?administered)|do not use|avoid concomitant use|avoid combination|life-threatening|fatal|increased risk of death|black box)\b/i;
 const ELEVATED_SIGNALS = /\b(increased risk|serious|significantly increase|severe|major bleeding|toxicity)\b/i;
@@ -33,40 +33,21 @@ function refineSeverity(base: Severity, excerpt: string): Severity {
 
 export type CheckOutcome = { result: ResultData; severity: LogEntry["severity"] };
 
-export type ProfileCounts = { medications: number; allergies: number; conditions: number };
-
-// The Interaction Checker works standalone — you shouldn't need anything saved
-// in your profile to check a drug or two against each other. Say what was
-// actually compared instead of always reporting profile counts, which read as
-// a broken "0/0/0" tally when the profile is empty or irrelevant to this check.
-function buildCheckedAgainstText(items: string[], profile: ProfileCounts): string {
-  const profileTotal = profile.medications + profile.allergies + profile.conditions;
-  if (items.length > 1) {
-    return profileTotal > 0
-      ? `Each other, plus ${profile.medications} medications, ${profile.allergies} allergies, ${profile.conditions} conditions in your profile`
-      : "Each other";
-  }
-  return profileTotal > 0
-    ? `${profile.medications} medications, ${profile.allergies} allergies, ${profile.conditions} conditions in your profile`
-    : "Nothing saved yet — add medications, allergies, or conditions to your profile to check this against what you're already taking";
-}
-
 /**
- * Fetches each item's real FDA label live (openFDA) and scans its interaction /
- * warning / contraindication text for mentions of anything in `profileNames`
- * (existing medications/allergies/conditions, plus any other items being
- * checked alongside it). This is a live, honest heuristic — a real pairwise
- * drug-interaction database (e.g. DrugBank) isn't free/keyless, so we surface
- * what the FDA's own label text says rather than a fabricated verdict.
+ * Fetches each item's real FDA label live (openFDA) and scans its interaction,
+ * warning, and contraindication text for mentions of anything in
+ * `profileNames` (existing medications, allergies, and conditions, plus any
+ * other items being checked alongside it). This is a live, honest heuristic.
+ * A real pairwise drug interaction database (e.g. DrugBank) isn't free or
+ * keyless, so this surfaces what the FDA's own label text says rather than a
+ * fabricated verdict.
  */
 export async function checkMedicationsAgainstProfile(
   items: string[],
   profileNames: string[],
-  profileCounts: ProfileCounts,
   /** When provided, the result offers to add every checked item not already in this list. */
   existingMedicationNames?: string[],
 ): Promise<CheckOutcome> {
-  const checkedAgainstText = buildCheckedAgainstText(items, profileCounts);
   const addPromptNames = existingMedicationNames
     ? items.filter((item) => !existingMedicationNames.some((m) => m.toLowerCase() === item.toLowerCase()))
     : undefined;
@@ -84,7 +65,7 @@ export async function checkMedicationsAgainstProfile(
           outcome: "unresolved",
           title: items.join(", "),
           subtitle: "No FDA label on file",
-          note: "openFDA doesn't have a published label under this exact name — try the generic name, or double-check the spelling.",
+          note: "openFDA doesn't have a published label under this exact name. Try the generic name, or double check the spelling.",
           addPromptNames: [items[0]],
         },
       };
@@ -113,7 +94,7 @@ export async function checkMedicationsAgainstProfile(
         const needle = new RegExp(`\\b${escapeRegExp(profName.trim())}`, "i");
         const hitSection = info.sections.find((s) => needle.test(s.text));
         if (hitSection) {
-          const detail = excerptAround(hitSection.text, profName.trim());
+          const detail = excerptAround(hitSection.text);
           conflicts.push({
             pair: `${info.displayName} + ${profName}`,
             severity: refineSeverity(hitSection.severity, detail),
@@ -126,8 +107,8 @@ export async function checkMedicationsAgainstProfile(
 
     const title = displayNames.join(", ") || items.join(", ");
     const sourceLabel = anyOffline
-      ? "Source: openFDA drug label data (from bundled offline snapshot — live check unavailable)"
-      : "Source: openFDA drug label database (checked live)";
+      ? "Source: openFDA drug label data, from bundled offline snapshot (live check unavailable)"
+      : "Source: openFDA drug label database, checked live";
 
     if (conflicts.length > 0) {
       const worst = conflicts.reduce<Severity>(
@@ -139,7 +120,7 @@ export async function checkMedicationsAgainstProfile(
         result: {
           outcome: "found",
           title,
-          subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found — ${anyOffline ? "from an offline FDA data snapshot" : "live from openFDA"}`,
+          subtitle: `${conflicts.length} potential interaction${conflicts.length > 1 ? "s" : ""} found, ${anyOffline ? "from an offline FDA data snapshot" : "live from openFDA"}`,
           conflicts,
           addPromptNames,
         },
@@ -152,7 +133,6 @@ export async function checkMedicationsAgainstProfile(
         outcome: "clear",
         title,
         subtitle: "No mention found in the current FDA label",
-        checkedAgainst: checkedAgainstText,
         source: sourceLabel,
         addPromptNames,
       },
@@ -166,7 +146,7 @@ export async function checkMedicationsAgainstProfile(
         subtitle: "Couldn't complete the check",
         note:
           err instanceof DrugApiError
-            ? `${err.message} It isn't in our small offline fallback set either — try a common generic name (e.g. "ibuprofen" instead of a brand name).`
+            ? `${err.message} It isn't in our small offline fallback set either. Try a common generic name (e.g. "ibuprofen" instead of a brand name).`
             : "Something went wrong reaching the live drug database. Please try again.",
       },
     };

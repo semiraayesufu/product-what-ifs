@@ -41,11 +41,11 @@ export const DOT_COLOR: Record<Severity | "clear", string> = {
 // severity actually means to do about it, not just a clinical label.
 export const SEVERITY_GUIDANCE: Record<Severity, string> = {
   major:
-    "High-risk combination. Don't start or continue taking these together without talking to a doctor or pharmacist first.",
+    "High risk combination. Don't start or continue taking these together without talking to a doctor or pharmacist first.",
   moderate:
-    "Worth a conversation. This combination can cause a real interaction for some people — tell your doctor or pharmacist you're taking both, and watch for new or unusual symptoms.",
+    "Worth a conversation. This combination can cause a real interaction for some people. Tell your doctor or pharmacist you're taking both, and watch for new or unusual symptoms.",
   minor:
-    "Usually low-risk. This is a mild, well-documented interaction — most people take these together safely, but it's worth mentioning at your next appointment.",
+    "Usually low risk. This is a mild, well documented interaction. Most people take these together safely, but it's worth mentioning at your next appointment.",
   unresolved:
     "We couldn't confirm this from FDA data. Ask your pharmacist to check directly before assuming it's safe.",
 };
