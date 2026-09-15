@@ -206,9 +206,34 @@ export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): P
   }
 }
 
-/** Returns the full matched label section, untruncated — no character-count
- * cutoff and no ellipsis, so the text is always complete rather than a
- * partial excerpt. */
-export function excerptAround(text: string): string {
-  return text.trim();
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-Z])/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Picks the complete sentence(s) around the matched drug name, instead of
+ * either a fixed-character-radius cut (which chops words in half) or the
+ * entire label section (which is a wall of dense legal text). Always ends
+ * on real sentence punctuation, never mid-word and never with an ellipsis. */
+export function excerptAround(text: string, needle: string): string {
+  const trimmed = text.trim();
+  const sentences = splitSentences(trimmed);
+  const needleLower = needle.toLowerCase();
+
+  const idx = sentences.findIndex((s) => s.toLowerCase().includes(needleLower));
+  if (idx === -1) {
+    // No sentence-level match, likely a flat comma-separated list with no
+    // real punctuation to split on. Fall back to the first couple of
+    // sentences so it stays short rather than dumping the whole section.
+    return sentences.slice(0, 2).join(" ") || trimmed;
+  }
+
+  // A very short matched sentence (e.g. just a drug name in a fragment)
+  // reads better with one neighboring sentence of context.
+  const short = sentences[idx].length < 40;
+  const start = short && idx > 0 ? idx - 1 : idx;
+  const end = short && idx < sentences.length - 1 ? idx + 1 : idx;
+  return sentences.slice(start, end + 1).join(" ");
 }

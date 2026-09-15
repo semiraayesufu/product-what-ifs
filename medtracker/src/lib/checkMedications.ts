@@ -94,10 +94,12 @@ export async function checkMedicationsAgainstProfile(
         const needle = new RegExp(`\\b${escapeRegExp(profName.trim())}`, "i");
         const hitSection = info.sections.find((s) => needle.test(s.text));
         if (hitSection) {
-          const detail = excerptAround(hitSection.text);
+          const detail = excerptAround(hitSection.text, profName.trim());
           conflicts.push({
             pair: `${info.displayName} + ${profName}`,
-            severity: refineSeverity(hitSection.severity, detail),
+            // Scan the full section for severity signal words, not just the
+            // (now shorter) displayed excerpt, so refinement stays accurate.
+            severity: refineSeverity(hitSection.severity, hitSection.text),
             headline: `${profName} is mentioned in this label's ${hitSection.label.toLowerCase()}`,
             detail,
           });
