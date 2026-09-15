@@ -12,14 +12,15 @@ import type { ResultData, Decision } from "../types";
 
 export type { ResultData };
 
-// A real, staffed 24/7 US hotline for exactly this kind of question, not a
-// stand-in for a specific provider's number, which the app has no way to know.
-const POISON_CONTROL_TEL = "+18002221222";
-const POISON_CONTROL_DISPLAY = "1 800 222 1222";
+// Nigeria's national emergency number, unified across all networks by the
+// NCC. Not a stand-in for a specific provider's number, which the app has no
+// way to know.
+const EMERGENCY_TEL = "112";
+const EMERGENCY_DISPLAY = "112";
 
 const DECISION_LABEL: Record<Decision, string> = {
   proceed: "You chose to proceed",
-  "contact-provider": `Called Poison Control (${POISON_CONTROL_DISPLAY})`,
+  "contact-provider": `Called Emergency Services (${EMERGENCY_DISPLAY})`,
   cancel: "You chose not to add this",
 };
 
@@ -249,12 +250,12 @@ export default function ResultPanel({
                     <span className="text-sm font-semibold text-slate-700">Proceed anyway</span>
                   </button>
                   <a
-                    href={`tel:${POISON_CONTROL_TEL}`}
+                    href={`tel:${EMERGENCY_TEL}`}
                     onClick={() => onDecide?.("contact-provider")}
                     className="flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 shadow-xs"
                   >
                     <span className="text-sm font-semibold text-white">
-                      Call Poison Control ({POISON_CONTROL_DISPLAY})
+                      Call Emergency Services ({EMERGENCY_DISPLAY})
                     </span>
                   </a>
                   <button
@@ -266,8 +267,8 @@ export default function ResultPanel({
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Poison Control is a free, confidential medication safety line, staffed 24/7. It
-                  is not your personal doctor's office. In a medical emergency, call 911.
+                  112 is Nigeria's national emergency number, for urgent medical situations. It is
+                  not your personal doctor's office.
                 </p>
               </div>
             )}
