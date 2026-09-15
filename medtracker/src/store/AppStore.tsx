@@ -12,6 +12,38 @@ interface PersistedState {
 
 const EMPTY_STATE: PersistedState = { medications: [], allergies: [], conditions: [], log: [] };
 
+const BACKUP_PREFIX = "MEDTRACKER-V1:";
+
+// A transfer code isn't a sync mechanism — it's a one-time snapshot the
+// patient copies onto a second device, since the app has no backend or
+// accounts to sync through automatically.
+function encodeBackup(state: PersistedState): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(state));
+  let binary = "";
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return BACKUP_PREFIX + btoa(binary);
+}
+
+function decodeBackup(code: string): PersistedState {
+  const trimmed = code.trim();
+  if (!trimmed.startsWith(BACKUP_PREFIX)) {
+    throw new Error("That doesn't look like a MedTracker transfer code.");
+  }
+  const binary = atob(trimmed.slice(BACKUP_PREFIX.length));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const parsed = JSON.parse(new TextDecoder().decode(bytes));
+  if (
+    !Array.isArray(parsed.medications) ||
+    !Array.isArray(parsed.allergies) ||
+    !Array.isArray(parsed.conditions) ||
+    !Array.isArray(parsed.log)
+  ) {
+    throw new Error("That code is missing some profile data.");
+  }
+  return parsed;
+}
+
 // Persisted to the browser's local storage so a profile and decision log
 // survive a refresh or a return visit, not just the current session. Reads
 // and writes are wrapped in try/catch since localStorage can throw (private
@@ -58,6 +90,10 @@ interface AppState {
   addLogEntry: (entry: LogEntry) => void;
   decideLogEntry: (id: string, decision: Decision, contactedProvider?: string) => void;
   removeLogEntry: (id: string) => void;
+  /** A copyable snapshot of the whole profile, for moving it to another device. */
+  exportBackupCode: () => string;
+  /** Replaces the current profile with one decoded from a transfer code. Throws on invalid input. */
+  importBackupCode: (code: string) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -149,6 +185,14 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           prev.map((e) => (e.id === id ? { ...e, decision, contactedProvider } : e)),
         ),
       removeLogEntry: (id) => setLog((prev) => prev.filter((e) => e.id !== id)),
+      exportBackupCode: () => encodeBackup({ medications, allergies, conditions, log }),
+      importBackupCode: (code) => {
+        const next = decodeBackup(code);
+        setMedications(next.medications);
+        setAllergies(next.allergies);
+        setConditions(next.conditions);
+        setLog(next.log);
+      },
     }),
     [medications, allergies, conditions, log],
   );
