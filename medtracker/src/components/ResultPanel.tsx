@@ -1,9 +1,11 @@
+import { useState } from "react";
 import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
-import printerIcon from "../assets/icons/printer.svg";
+import copyIcon from "../assets/icons/copy.svg";
 import plusIcon from "../assets/icons/plus.svg";
 import trashIcon from "../assets/icons/trash-bin.svg";
-import SeverityBadge from "./SeverityBadge";
+import InlineConfirm from "./InlineConfirm";
+import SeverityBadge, { SEVERITY_GUIDANCE } from "./SeverityBadge";
 import type { ResultData, Decision } from "../types";
 
 export type { ResultData };
@@ -13,6 +15,56 @@ const DECISION_LABEL: Record<Decision, string> = {
   "contact-provider": "Provider contacted — awaiting response",
   cancel: "You chose not to add this",
 };
+
+function buildCopyText(data: ResultData): string {
+  const lines = [data.title, data.subtitle, ""];
+  if (data.outcome === "found" && data.conflicts) {
+    for (const c of data.conflicts) {
+      lines.push(`${c.pair} — ${c.severity.toUpperCase()}`);
+      lines.push(c.headline);
+      lines.push(c.detail);
+      lines.push(`What this means: ${SEVERITY_GUIDANCE[c.severity]}`);
+      lines.push("");
+    }
+  }
+  if (data.outcome === "clear") {
+    lines.push(`Checked against: ${data.checkedAgainst}`);
+    if (data.source) lines.push(data.source);
+  }
+  if (data.outcome === "unresolved") {
+    lines.push(data.note ?? "We don't have documented interaction data for this item yet.");
+  }
+  lines.push("", "This is informational only — not a substitute for medical advice.");
+  return lines.join("\n");
+}
+
+/** Copies via the Clipboard API where allowed, falling back to a hidden-textarea
+ * execCommand copy — the app runs inside a sandboxed iframe where the Clipboard
+ * API can be unavailable even though a direct user click is driving it. */
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fall through to legacy path
+  }
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+}
 
 export default function ResultPanel({
   data,
@@ -24,6 +76,7 @@ export default function ResultPanel({
   onConfirm,
   confirmLabel,
   onDelete,
+  existingMedicationNames,
 }: {
   data: ResultData;
   onBack: () => void;
@@ -36,8 +89,23 @@ export default function ResultPanel({
   confirmLabel?: string;
   /** Deletes this saved check from history — only passed for entries that exist in the log. */
   onDelete?: () => void;
+  /** Current medication names — used to hide "add to medications" prompts for items already added. */
+  existingMedicationNames?: string[];
 }) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const needsDecision = onDecide && (data.outcome === "found" || data.outcome === "unresolved");
+
+  const addPromptNames = data.addPromptNames?.filter(
+    (name) => !existingMedicationNames?.some((m) => m.toLowerCase() === name.toLowerCase()),
+  );
+
+  async function handleCopy() {
+    const ok = await copyToClipboard(buildCopyText(data));
+    setCopyState(ok ? "copied" : "failed");
+    setTimeout(() => setCopyState("idle"), 2500);
+  }
+
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-hidden px-8 py-5">
       <div className="flex w-full items-start justify-between print:hidden">
@@ -52,26 +120,41 @@ export default function ResultPanel({
           <p className="text-xl font-semibold text-slate-800">{data.title}</p>
           <p className="text-xs text-slate-600">{data.subtitle}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 print:hidden">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
-          >
-            <img src={printerIcon} alt="" className="size-3.5" />
-            <span className="text-xs font-medium text-slate-600">Print Result</span>
-          </button>
-          {onDelete && (
+        <div className="flex shrink-0 flex-col items-end gap-1.5 print:hidden">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm("Delete this check from your history?")) onDelete();
-              }}
-              className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
             >
-              <img src={trashIcon} alt="" className="size-3.5" />
-              <span className="text-xs font-medium text-[#e7000b]">Delete</span>
+              <img src={copyIcon} alt="" className="size-3.5" />
+              <span className="text-xs font-medium text-slate-600">
+                {copyState === "copied" ? "Copied!" : "Copy Result"}
+              </span>
             </button>
+            {onDelete && !confirmingDelete && (
+              <button
+                type="button"
+                onClick={() => setConfirmingDelete(true)}
+                className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
+              >
+                <img src={trashIcon} alt="" className="size-3.5" />
+                <span className="text-xs font-medium text-[#e7000b]">Delete</span>
+              </button>
+            )}
+          </div>
+          {copyState === "failed" && (
+            <p className="max-w-[220px] text-right text-[11px] text-[#e7000b]">
+              Couldn't copy automatically — select the result text and copy it manually.
+            </p>
+          )}
+          {onDelete && confirmingDelete && (
+            <InlineConfirm
+              question="Delete this check?"
+              confirmLabel="Yes, delete"
+              onConfirm={onDelete}
+              onCancel={() => setConfirmingDelete(false)}
+            />
           )}
         </div>
       </div>
@@ -90,6 +173,14 @@ export default function ResultPanel({
                 </div>
                 <p className="text-xs font-medium text-slate-700">{c.headline}</p>
                 <p className="text-xs leading-[18px] text-slate-600">{c.detail}</p>
+                <div className="mt-1 flex flex-col gap-0.5 rounded-md border border-slate-200 bg-white px-2.5 py-2">
+                  <p className="text-[10px] font-semibold uppercase text-slate-500">
+                    What this means for you
+                  </p>
+                  <p className="text-xs leading-[18px] text-slate-700">
+                    {SEVERITY_GUIDANCE[c.severity]}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -110,6 +201,7 @@ export default function ResultPanel({
             <p className="text-xs text-slate-500">
               {data.note ?? "We don't have documented interaction data for this item yet."}
             </p>
+            <p className="text-xs leading-[18px] text-slate-600">{SEVERITY_GUIDANCE.unresolved}</p>
           </div>
         )}
 
@@ -148,21 +240,21 @@ export default function ResultPanel({
           </div>
         )}
 
-        {data.addPromptNames && data.addPromptNames.length > 0 && (
+        {addPromptNames && addPromptNames.length > 0 && (
           <div className="flex w-full flex-col gap-4 rounded-xl bg-slate-100 p-[18px] print:hidden">
             <div className="flex flex-col gap-2">
               <p className="text-[10px] font-semibold uppercase text-slate-800">
-                {data.addPromptNames.length > 1
-                  ? `${data.addPromptNames.join(", ")} aren't in your medication list`
-                  : `${data.addPromptNames[0]} isn't in your medication list`}
+                {addPromptNames.length > 1
+                  ? `${addPromptNames.join(", ")} aren't in your medication list`
+                  : `${addPromptNames[0]} isn't in your medication list`}
               </p>
               <p className="text-xs text-slate-600">
-                Add {data.addPromptNames.length > 1 ? "them" : "it"} to your profile so future checks
-                account for {data.addPromptNames.length > 1 ? "them" : "it"} automatically
+                Add {addPromptNames.length > 1 ? "them" : "it"} to your profile so future checks
+                account for {addPromptNames.length > 1 ? "them" : "it"} automatically
               </p>
             </div>
             <div className="flex w-full flex-wrap gap-2">
-              {data.addPromptNames.map((name) => (
+              {addPromptNames.map((name) => (
                 <button
                   key={name}
                   type="button"

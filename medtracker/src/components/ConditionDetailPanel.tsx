@@ -1,8 +1,10 @@
+import { useState } from "react";
 import editIcon from "../assets/icons/edit.svg";
 import trashIcon from "../assets/icons/trash-bin.svg";
 import chevronRight from "../assets/icons/chevron-right.svg";
 import FlaggedMedicationList from "./FlaggedMedicationList";
 import ChangeHistoryList from "./ChangeHistoryList";
+import InlineConfirm from "./InlineConfirm";
 import type { Condition } from "../types";
 
 export default function ConditionDetailPanel({
@@ -14,6 +16,7 @@ export default function ConditionDetailPanel({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-5 overflow-hidden px-8 py-6">
       <div className="flex w-full items-start gap-5">
@@ -24,24 +27,33 @@ export default function ConditionDetailPanel({
             <p className="text-xs text-slate-600">{condition.statusLabel}</p>
           </div>
         </div>
-        <div className="flex shrink-0 gap-3">
-          <button
-            type="button"
-            onClick={onEdit}
-            className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
-          >
-            <img src={editIcon} alt="" className="size-3.5" />
-            <span className="text-xs font-medium text-slate-600">Edit</span>
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
-          >
-            <img src={trashIcon} alt="" className="size-3.5" />
-            <span className="text-xs font-medium text-[#e7000b]">Delete</span>
-          </button>
-        </div>
+        {confirmingDelete ? (
+          <InlineConfirm
+            question="Delete this condition?"
+            confirmLabel="Yes, delete"
+            onConfirm={onDelete}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        ) : (
+          <div className="flex shrink-0 gap-3">
+            <button
+              type="button"
+              onClick={onEdit}
+              className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
+            >
+              <img src={editIcon} alt="" className="size-3.5" />
+              <span className="text-xs font-medium text-slate-600">Edit</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
+            >
+              <img src={trashIcon} alt="" className="size-3.5" />
+              <span className="text-xs font-medium text-[#e7000b]">Delete</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto">

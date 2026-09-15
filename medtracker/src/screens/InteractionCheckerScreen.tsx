@@ -117,6 +117,7 @@ export default function InteractionCheckerScreen({
           onBack={backToIdle}
           onClose={backToIdle}
           onAddMedication={handleAddMedication}
+          existingMedicationNames={medications.map((m) => m.name)}
           onDelete={() => {
             removeLogEntry(entry.id);
             backToIdle();

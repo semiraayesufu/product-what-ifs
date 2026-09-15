@@ -1,6 +1,7 @@
 import { useState } from "react";
 import editIcon from "../assets/icons/edit.svg";
 import trashIcon from "../assets/icons/trash-bin.svg";
+import InlineConfirm from "./InlineConfirm";
 import type { Medication } from "../types";
 
 export default function MedicationDetailPanel({
@@ -16,6 +17,7 @@ export default function MedicationDetailPanel({
   const [dosage, setDosage] = useState(medication.dosage);
   const [frequency, setFrequency] = useState(medication.frequency);
   const [takenToday, setTakenToday] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-hidden px-8 py-6">
@@ -29,24 +31,33 @@ export default function MedicationDetailPanel({
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 gap-3">
-          <button
-            type="button"
-            onClick={() => setEditing((v) => !v)}
-            className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
-          >
-            <img src={editIcon} alt="" className="size-3.5" />
-            <span className="text-xs font-medium text-slate-600">Edit</span>
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
-          >
-            <img src={trashIcon} alt="" className="size-3.5" />
-            <span className="text-xs font-medium text-[#e7000b]">Delete</span>
-          </button>
-        </div>
+        {confirmingDelete ? (
+          <InlineConfirm
+            question="Delete this medication?"
+            confirmLabel="Yes, delete"
+            onConfirm={onDelete}
+            onCancel={() => setConfirmingDelete(false)}
+          />
+        ) : (
+          <div className="flex shrink-0 gap-3">
+            <button
+              type="button"
+              onClick={() => setEditing((v) => !v)}
+              className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
+            >
+              <img src={editIcon} alt="" className="size-3.5" />
+              <span className="text-xs font-medium text-slate-600">Edit</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
+            >
+              <img src={trashIcon} alt="" className="size-3.5" />
+              <span className="text-xs font-medium text-[#e7000b]">Delete</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {editing ? (

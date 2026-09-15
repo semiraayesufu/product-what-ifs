@@ -1,8 +1,10 @@
+import { useState } from "react";
 import BackButton from "./BackButton";
 import closeIcon from "../assets/icons/close.svg";
 import editIcon from "../assets/icons/edit.svg";
 import trashIcon from "../assets/icons/trash-bin.svg";
 import plusIcon from "../assets/icons/plus-teal.svg";
+import InlineConfirm from "./InlineConfirm";
 
 export interface StagedRow {
   title: string;
@@ -36,6 +38,7 @@ export default function StagingReviewPanel({
   onBack: () => void;
   onClose: () => void;
 }) {
+  const [confirmingIndex, setConfirmingIndex] = useState<number | null>(null);
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col gap-6 overflow-y-auto px-8 py-6">
       <div className="flex w-full items-start justify-between">
@@ -51,35 +54,51 @@ export default function StagingReviewPanel({
       </div>
 
       <div className="flex flex-col gap-2">
-        {rows.map((row, i) => (
-          <div
-            key={`${row.title}-${i}`}
-            className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3"
-          >
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <p className="truncate text-sm font-medium text-slate-800">{row.title}</p>
-              <p className="truncate text-xs text-slate-500">{row.subtitle}</p>
+        {rows.map((row, i) =>
+          confirmingIndex === i ? (
+            <div
+              key={`${row.title}-${i}`}
+              className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3"
+            >
+              <InlineConfirm
+                question={`Remove ${row.title}?`}
+                onConfirm={() => {
+                  onRemove(i);
+                  setConfirmingIndex(null);
+                }}
+                onCancel={() => setConfirmingIndex(null)}
+              />
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <button
-                type="button"
-                onClick={() => onEdit(i)}
-                className="flex items-center gap-1 text-xs font-medium text-slate-600"
-              >
-                <img src={editIcon} alt="" className="size-3.5" />
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => onRemove(i)}
-                className="flex items-center gap-1 text-xs font-medium text-[#e7000b]"
-              >
-                <img src={trashIcon} alt="" className="size-3.5" />
-                Remove
-              </button>
+          ) : (
+            <div
+              key={`${row.title}-${i}`}
+              className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3"
+            >
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p className="truncate text-sm font-medium text-slate-800">{row.title}</p>
+                <p className="truncate text-xs text-slate-500">{row.subtitle}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => onEdit(i)}
+                  className="flex items-center gap-1 text-xs font-medium text-slate-600"
+                >
+                  <img src={editIcon} alt="" className="size-3.5" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingIndex(i)}
+                  className="flex items-center gap-1 text-xs font-medium text-[#e7000b]"
+                >
+                  <img src={trashIcon} alt="" className="size-3.5" />
+                  Remove
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
       </div>
 
       <div className="mt-auto flex flex-col gap-4">

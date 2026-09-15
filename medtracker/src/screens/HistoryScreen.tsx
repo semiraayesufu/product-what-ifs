@@ -16,7 +16,7 @@ export default function HistoryScreen({
   autoSelectId?: string | null;
   onAutoSelectHandled?: () => void;
 }) {
-  const { log, addMedication, decideLogEntry, removeLogEntry } = useAppStore();
+  const { log, medications, addMedication, decideLogEntry, removeLogEntry } = useAppStore();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(log[0]?.id ?? null);
 
@@ -92,6 +92,7 @@ export default function HistoryScreen({
             onBack={() => setSelectedId(null)}
             onClose={() => setSelectedId(null)}
             onAddMedication={addMedication}
+            existingMedicationNames={medications.map((m) => m.name)}
             onDelete={() => {
               removeLogEntry(selected.id);
               setSelectedId(null);
