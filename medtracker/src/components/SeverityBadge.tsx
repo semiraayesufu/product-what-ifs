@@ -2,10 +2,13 @@ import type { Severity } from "../types";
 
 export type { Severity };
 
+// "Minor" deliberately avoids green — green is reserved for "no interaction
+// found" (see DOT_COLOR.clear below) so it always means "safe," never
+// "a real interaction was found, just a mild one."
 const STYLES: Record<Severity, string> = {
   major: "bg-[#fef2f2] border-[#ffc9c9] text-[#82181a]",
   moderate: "bg-[#fff8f1] border-[#fcd9bd] text-[#771d1d]",
-  minor: "bg-[#ecfdf5] border-[#a4f4cf] text-[#006045]",
+  minor: "bg-[#fffbeb] border-[#fde68a] text-[#854d0e]",
   unresolved: "bg-slate-100 border-slate-200 text-slate-600",
 };
 
@@ -29,9 +32,9 @@ export default function SeverityBadge({ severity }: { severity: Severity }) {
 export const DOT_COLOR: Record<Severity | "clear", string> = {
   major: "bg-[#fb2c36]",
   moderate: "bg-[#ff6900]",
-  minor: "bg-[#00c950]",
+  minor: "bg-[#f0b100]",
   unresolved: "bg-slate-400",
-  clear: "bg-teal-700",
+  clear: "bg-[#00c950]",
 };
 
 // Plain-language guidance for patients/caregivers — explains what the

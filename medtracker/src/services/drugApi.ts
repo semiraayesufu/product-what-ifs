@@ -206,11 +206,26 @@ export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): P
   }
 }
 
+/** Snaps an index outward to the nearest word boundary so an excerpt never
+ * cuts a word in half (e.g. "...i…" instead of "...if…"). */
+function snapToWordBoundary(text: string, index: number, direction: "forward" | "backward"): number {
+  if (index <= 0 || index >= text.length) return index;
+  if (/\s/.test(text[index])) return index;
+  const step = direction === "forward" ? 1 : -1;
+  let i = index;
+  while (i > 0 && i < text.length && !/\s/.test(text[i])) i += step;
+  return Math.max(0, Math.min(text.length, i));
+}
+
 export function excerptAround(text: string, needle: string, radius = 150): string {
   const idx = text.toLowerCase().indexOf(needle.toLowerCase());
-  if (idx === -1) return text.length > radius * 2 ? `${text.slice(0, radius * 2)}…` : text;
-  const start = Math.max(0, idx - radius);
-  const end = Math.min(text.length, idx + needle.length + radius);
+  if (idx === -1) {
+    if (text.length <= radius * 2) return text;
+    const cut = snapToWordBoundary(text, radius * 2, "backward");
+    return `${text.slice(0, cut).trim()}…`;
+  }
+  const start = snapToWordBoundary(text, Math.max(0, idx - radius), "backward");
+  const end = snapToWordBoundary(text, Math.min(text.length, idx + needle.length + radius), "forward");
   let excerpt = text.slice(start, end).trim();
   if (start > 0) excerpt = `…${excerpt}`;
   if (end < text.length) excerpt = `${excerpt}…`;
