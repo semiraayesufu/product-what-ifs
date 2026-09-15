@@ -1,7 +1,7 @@
 import { useState } from "react";
 import editIcon from "../assets/icons/edit.svg";
 import trashIcon from "../assets/icons/trash-bin.svg";
-import InlineConfirm from "./InlineConfirm";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import type { Medication } from "../types";
 
 export default function MedicationDetailPanel({
@@ -31,34 +31,33 @@ export default function MedicationDetailPanel({
             </p>
           </div>
         </div>
-        {confirmingDelete ? (
-          <InlineConfirm
-            question="Delete this medication?"
-            confirmLabel="Yes, delete"
-            onConfirm={onDelete}
-            onCancel={() => setConfirmingDelete(false)}
-          />
-        ) : (
-          <div className="flex shrink-0 gap-3">
-            <button
-              type="button"
-              onClick={() => setEditing((v) => !v)}
-              className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
-            >
-              <img src={editIcon} alt="" className="size-3.5" />
-              <span className="text-xs font-medium text-slate-600">Edit</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmingDelete(true)}
-              className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
-            >
-              <img src={trashIcon} alt="" className="size-3.5" />
-              <span className="text-xs font-medium text-[#e7000b]">Delete</span>
-            </button>
-          </div>
-        )}
+        <div className="flex shrink-0 gap-3">
+          <button
+            type="button"
+            onClick={() => setEditing((v) => !v)}
+            className="flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-xs"
+          >
+            <img src={editIcon} alt="" className="size-3.5" />
+            <span className="text-xs font-medium text-slate-600">Edit</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(true)}
+            className="flex items-center gap-1.5 rounded-sm border border-[#ffc9c9] bg-[#fef2f2] px-3 py-1.5 shadow-xs"
+          >
+            <img src={trashIcon} alt="" className="size-3.5" />
+            <span className="text-xs font-medium text-[#e7000b]">Delete</span>
+          </button>
+        </div>
       </div>
+
+      {confirmingDelete && (
+        <ConfirmDeleteModal
+          message="Are you sure you want to delete this medication from your profile?"
+          onConfirm={onDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
 
       {editing ? (
         <div className="flex w-full flex-col gap-4 rounded-lg bg-slate-100 p-4">

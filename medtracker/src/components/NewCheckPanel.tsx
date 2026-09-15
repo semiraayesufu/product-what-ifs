@@ -2,7 +2,7 @@ import { useState } from "react";
 import closeIcon from "../assets/icons/close.svg";
 import closeSmallIcon from "../assets/icons/close-14.svg";
 import searchIcon from "../assets/icons/search.svg";
-import InlineConfirm from "./InlineConfirm";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import { useLiveDrugSearch } from "../hooks/useLiveDrugSearch";
 
 export default function NewCheckPanel({
@@ -93,33 +93,17 @@ export default function NewCheckPanel({
           <div className="flex flex-col gap-3">
             <p className="text-[11px] font-semibold uppercase text-slate-600">Checking</p>
             <div className="flex flex-col gap-2">
-              {items.map((name) =>
-                removingName === name ? (
-                  <div
-                    key={name}
-                    className="flex items-center justify-between gap-2 rounded-[10px] border border-slate-200 bg-slate-50 p-3.5"
-                  >
-                    <InlineConfirm
-                      question={`Remove ${name}?`}
-                      onConfirm={() => {
-                        removeItem(name);
-                        setRemovingName(null);
-                      }}
-                      onCancel={() => setRemovingName(null)}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    key={name}
-                    className="flex items-center justify-between rounded-[10px] border border-slate-200 bg-slate-50 p-3.5"
-                  >
-                    <p className="text-sm font-medium text-slate-800">{name}</p>
-                    <button type="button" onClick={() => setRemovingName(name)}>
-                      <img src={closeSmallIcon} alt="Remove" className="size-3.5" />
-                    </button>
-                  </div>
-                ),
-              )}
+              {items.map((name) => (
+                <div
+                  key={name}
+                  className="flex items-center justify-between rounded-[10px] border border-slate-200 bg-slate-50 p-3.5"
+                >
+                  <p className="text-sm font-medium text-slate-800">{name}</p>
+                  <button type="button" onClick={() => setRemovingName(name)}>
+                    <img src={closeSmallIcon} alt="Remove" className="size-3.5" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -141,6 +125,17 @@ export default function NewCheckPanel({
           <span className="text-sm font-semibold text-white">Save</span>
         </button>
       </div>
+
+      {removingName && (
+        <ConfirmDeleteModal
+          message={`Are you sure you want to remove ${removingName} from this check?`}
+          onConfirm={() => {
+            removeItem(removingName);
+            setRemovingName(null);
+          }}
+          onCancel={() => setRemovingName(null)}
+        />
+      )}
     </div>
   );
 }

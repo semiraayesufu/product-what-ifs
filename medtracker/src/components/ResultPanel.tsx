@@ -6,7 +6,7 @@ import printerIcon from "../assets/icons/printer.svg";
 import plusIcon from "../assets/icons/plus.svg";
 import trashIcon from "../assets/icons/trash-bin.svg";
 import shieldCheckIcon from "../assets/icons/shield-check.svg";
-import InlineConfirm from "./InlineConfirm";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import SeverityBadge, { SEVERITY_GUIDANCE } from "./SeverityBadge";
 import type { ResultData, Decision } from "../types";
 
@@ -147,7 +147,7 @@ export default function ResultPanel({
                 {copyState === "copied" ? "Copied!" : "Copy Result"}
               </span>
             </button>
-            {onDelete && !confirmingDelete && (
+            {onDelete && (
               <button
                 type="button"
                 onClick={() => setConfirmingDelete(true)}
@@ -166,16 +166,16 @@ export default function ResultPanel({
               Couldn't copy automatically. Select the result text and copy it manually.
             </p>
           )}
-          {onDelete && confirmingDelete && (
-            <InlineConfirm
-              question="Delete this check?"
-              confirmLabel="Yes, delete"
-              onConfirm={onDelete}
-              onCancel={() => setConfirmingDelete(false)}
-            />
-          )}
         </div>
       </div>
+
+      {onDelete && confirmingDelete && (
+        <ConfirmDeleteModal
+          message="Are you sure you want to delete this check from your history?"
+          onConfirm={onDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
 
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto">
         {data.outcome === "found" && data.conflicts && (
