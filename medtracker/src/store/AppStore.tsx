@@ -1,5 +1,37 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Medication, Allergy, Condition, LogEntry, Decision } from "../types";
+
+const STORAGE_KEY = "medtracker:profile:v1";
+
+interface PersistedState {
+  medications: Medication[];
+  allergies: Allergy[];
+  conditions: Condition[];
+  log: LogEntry[];
+}
+
+const EMPTY_STATE: PersistedState = { medications: [], allergies: [], conditions: [], log: [] };
+
+// Persisted to the browser's local storage so a profile and decision log
+// survive a refresh or a return visit, not just the current session. Reads
+// and writes are wrapped in try/catch since localStorage can throw (private
+// browsing, quota exceeded, or disabled entirely) and that should degrade to
+// an in-memory-only session rather than crash the app.
+function loadPersistedState(): PersistedState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return EMPTY_STATE;
+    const parsed = JSON.parse(raw);
+    return {
+      medications: Array.isArray(parsed.medications) ? parsed.medications : [],
+      allergies: Array.isArray(parsed.allergies) ? parsed.allergies : [],
+      conditions: Array.isArray(parsed.conditions) ? parsed.conditions : [],
+      log: Array.isArray(parsed.log) ? parsed.log : [],
+    };
+  } catch {
+    return EMPTY_STATE;
+  }
+}
 
 interface MedicationDetails {
   dosage?: string;
@@ -35,10 +67,21 @@ export function slugify(name: string) {
 }
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [allergies, setAllergies] = useState<Allergy[]>([]);
-  const [conditions, setConditions] = useState<Condition[]>([]);
-  const [log, setLog] = useState<LogEntry[]>([]);
+  const [initial] = useState(loadPersistedState);
+  const [medications, setMedications] = useState<Medication[]>(initial.medications);
+  const [allergies, setAllergies] = useState<Allergy[]>(initial.allergies);
+  const [conditions, setConditions] = useState<Condition[]>(initial.conditions);
+  const [log, setLog] = useState<LogEntry[]>(initial.log);
+
+  useEffect(() => {
+    try {
+      const state: PersistedState = { medications, allergies, conditions, log };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Storage unavailable (private browsing, quota, disabled) — the
+      // session still works, it just won't survive a refresh.
+    }
+  }, [medications, allergies, conditions, log]);
 
   const value = useMemo<AppState>(
     () => ({
