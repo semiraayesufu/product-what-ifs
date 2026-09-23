@@ -1,5 +1,6 @@
 import type { Severity } from "../types";
 import fallbackData from "../data/drugSafetyFallback.json";
+import { coreDrugName } from "../lib/drugNames";
 
 const RXNAV_BASE = "https://rxnav.nlm.nih.gov/REST";
 const OPENFDA_BASE = "https://api.fda.gov/drug/label.json";
@@ -59,7 +60,7 @@ export async function searchMedicationNames(term: string, signal?: AbortSignal):
 }
 
 export interface LabelSection {
-  key: "boxed_warning" | "contraindications" | "drug_interactions" | "warnings" | "otc_interactions";
+  key: "boxed_warning" | "contraindications" | "drug_interactions" | "warnings" | "warnings_and_cautions" | "precautions" | "otc_interactions";
   label: string;
   text: string;
   severity: Severity;
@@ -92,6 +93,8 @@ function parseLabel(queriedName: string, result: any): DrugSafetyInfo {
   add("contraindications", "Contraindications", firstNonEmpty(result.contraindications), "major");
   add("drug_interactions", "Drug interactions", firstNonEmpty(result.drug_interactions), "moderate");
   add("warnings", "Warnings", firstNonEmpty(result.warnings), "minor");
+  add("warnings_and_cautions", "Warnings and cautions", firstNonEmpty(result.warnings_and_cautions), "minor");
+  add("precautions", "Precautions", firstNonEmpty(result.precautions), "minor");
   add(
     "otc_interactions",
     "Interaction guidance",
@@ -192,7 +195,7 @@ async function fetchFromLiveApi(trimmed: string, signal?: AbortSignal): Promise<
  * names, not an error.
  */
 export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): Promise<DrugSafetyInfo | null> {
-  const trimmed = name.trim().replace(/"/g, "");
+  const trimmed = coreDrugName(name).replace(/"/g, "");
   if (!trimmed) return null;
 
   try {
@@ -204,36 +207,4 @@ export async function fetchDrugSafetyInfo(name: string, signal?: AbortSignal): P
     if (fallback) return fallback;
     throw err;
   }
-}
-
-function splitSentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?])\s+(?=[A-Z])/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-/** Picks the complete sentence(s) around the matched drug name, instead of
- * either a fixed-character-radius cut (which chops words in half) or the
- * entire label section (which is a wall of dense legal text). Always ends
- * on real sentence punctuation, never mid-word and never with an ellipsis. */
-export function excerptAround(text: string, needle: string): string {
-  const trimmed = text.trim();
-  const sentences = splitSentences(trimmed);
-  const needleLower = needle.toLowerCase();
-
-  const idx = sentences.findIndex((s) => s.toLowerCase().includes(needleLower));
-  if (idx === -1) {
-    // No sentence-level match, likely a flat comma-separated list with no
-    // real punctuation to split on. Fall back to the first couple of
-    // sentences so it stays short rather than dumping the whole section.
-    return sentences.slice(0, 2).join(" ") || trimmed;
-  }
-
-  // A very short matched sentence (e.g. just a drug name in a fragment)
-  // reads better with one neighboring sentence of context.
-  const short = sentences[idx].length < 40;
-  const start = short && idx > 0 ? idx - 1 : idx;
-  const end = short && idx < sentences.length - 1 ? idx + 1 : idx;
-  return sentences.slice(start, end + 1).join(" ");
 }

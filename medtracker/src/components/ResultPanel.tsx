@@ -191,7 +191,7 @@ export default function ResultPanel({
                   <SeverityBadge severity={c.severity} />
                 </div>
                 <p className="text-xs font-medium text-slate-700">{c.headline}</p>
-                <p className="text-xs leading-[18px] text-slate-600">{c.detail}</p>
+                <p className="whitespace-pre-line text-xs leading-[18px] text-slate-600">{c.detail}</p>
                 <div className="mt-1 flex flex-col gap-0.5 rounded-md border border-slate-200 bg-white px-2.5 py-2">
                   <p className="text-[10px] font-semibold uppercase text-slate-500">
                     What this means for you
@@ -203,6 +203,10 @@ export default function ResultPanel({
               </div>
             ))}
           </div>
+        )}
+
+        {data.outcome === "found" && data.note && (
+          <p className="rounded-lg bg-slate-100 px-3.5 py-2.5 text-xs leading-[18px] text-slate-600">{data.note}</p>
         )}
 
         {data.outcome === "clear" && (
