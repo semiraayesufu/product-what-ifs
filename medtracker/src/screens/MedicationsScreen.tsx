@@ -310,6 +310,7 @@ export default function MedicationsScreen({
 
             {flowStep === "closed" && selected && (
               <MedicationDetailPanel
+                key={selected.id}
                 medication={selected}
                 onSave={(patch) => updateMedication(selected.id, patch)}
                 onDelete={() => {
@@ -320,13 +321,6 @@ export default function MedicationsScreen({
             )}
           </>
         )}
-      </div>
-
-      <div className="flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-5 py-3.5 text-slate-600 print:hidden">
-        <p className="text-[13px] font-bold">ⓘ</p>
-        <p className="text-xs">
-          MedTracker shares information only. It is not a replacement for professional medical advice. It does not diagnose, prescribe, or replace advice from a licensed provider.
-        </p>
       </div>
     </div>
   );

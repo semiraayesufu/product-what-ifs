@@ -6,6 +6,7 @@ export interface Medication {
   status?: string;
   condition?: string;
   prescribedBy?: string;
+  history?: HistoryRow[];
 }
 
 export interface FlaggedItem {

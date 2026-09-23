@@ -56,7 +56,21 @@ export default function Sidebar({
                 isActive ? "bg-teal-50" : ""
               }`}
             >
-              <img src={item.icon} alt="" className="size-5" />
+              <span
+                aria-hidden="true"
+                className="size-5 shrink-0"
+                style={{
+                  backgroundColor: isActive ? "#0f766e" : "#45556C",
+                  WebkitMaskImage: `url("${item.icon}")`,
+                  maskImage: `url("${item.icon}")`,
+                  WebkitMaskRepeat: "no-repeat",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskSize: "contain",
+                  maskSize: "contain",
+                  WebkitMaskPosition: "center",
+                  maskPosition: "center",
+                }}
+              />
               <span
                 className={`text-base font-medium ${
                   isActive ? "text-teal-700" : "text-slate-600"
@@ -76,16 +90,14 @@ export default function Sidebar({
         <img src={uploadIcon} alt="" className="size-4" />
         <span className="text-xs font-medium text-slate-600">Move to another device</span>
       </button>
-      {disclaimer && (
-        <div className="flex w-full flex-col gap-4 rounded-base border border-[#96f7e4] bg-teal-50 p-4">
-          <div className="flex flex-col gap-1.5">
-            <p className="text-sm font-semibold text-teal-700">
-              This tool shares information only
-            </p>
-            <p className="text-xs leading-5 text-teal-700">{disclaimer}</p>
-          </div>
+      <div className="flex w-full flex-col gap-4 rounded-base border border-[#96f7e4] bg-teal-50 p-4">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm font-semibold text-teal-700">This tool shares information only</p>
+          <p className="text-xs leading-5 text-teal-700">
+            {disclaimer ?? "It does not diagnose, prescribe, or replace advice from a licensed provider."}
+          </p>
         </div>
-      )}
+      </div>
       {backupOpen && <BackupModal onClose={() => setBackupOpen(false)} />}
     </div>
   );

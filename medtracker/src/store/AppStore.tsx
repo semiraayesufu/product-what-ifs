@@ -98,6 +98,10 @@ interface AppState {
 
 const AppContext = createContext<AppState | null>(null);
 
+function todayLabel() {
+  return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 export function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `item-${Date.now()}`;
 }
@@ -138,12 +142,25 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
               status: details?.status,
               condition: details?.condition,
               prescribedBy: details?.prescribedBy,
+              history: [{ label: "Added to profile", date: todayLabel() }],
             },
           ];
         });
       },
       updateMedication: (id, patch) =>
-        setMedications((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m))),
+        setMedications((prev) =>
+          prev.map((m) => {
+            if (m.id !== id) return m;
+            const history = [...(m.history ?? [])];
+            if (patch.dosage !== undefined && patch.dosage !== m.dosage) {
+              history.unshift({ label: `Dose changed: ${m.dosage} to ${patch.dosage}`, date: todayLabel() });
+            }
+            if (patch.frequency !== undefined && patch.frequency !== m.frequency) {
+              history.unshift({ label: `Frequency changed: ${m.frequency} to ${patch.frequency}`, date: todayLabel() });
+            }
+            return { ...m, ...patch, history };
+          }),
+        ),
       removeMedication: (id) => setMedications((prev) => prev.filter((m) => m.id !== id)),
       addAllergy: (allergy) =>
         setAllergies((prev) => [
